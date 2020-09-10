@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	// olric://local?rates=search:60,block:60,blockmeta:60,token:60"
+	// "olric://local?rates=search:60,block:60,blockmeta:60,token:60&whitelist=1.2.3.4,1.1.1.1"
 	ratelimiter.Register("olric", func(configURL string) (ratelimiter.RateLimiter, error) {
 		zlog.Info("parsing rate limiter settings", zap.String("url", configURL))
 		olricPeers, userRateLimits, whitelistedIps, err := parseURL(configURL)
@@ -275,7 +275,9 @@ func (r *RequestRateLimiter) Gate(
 		zap.Int64("last_min_count", lastMinCount),
 		zap.Int64("limit", limit),
 		zap.Bool("allowed", allow),
-		zap.Bool("whitelisted", r.whitelist[uid]),
+		zap.String("id", id),
+		zap.String("uid", uid),
+		zap.Bool("whitelisted", r.whitelist[id]),
 	)
 
 	return

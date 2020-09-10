@@ -2,6 +2,7 @@ package ratelimiter
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"net/url"
 	"strconv"
 	"strings"
@@ -70,8 +71,18 @@ func constructWhitelist(in string) (map[string]bool, error) {
 	whitelistEntries := strings.Split(in, ",")
 	out := make(map[string]bool)
 
+	// todo remove
+	zlog.Info("parsing whitelist",
+		zap.String("in", in),
+		zap.String("split", strings.Join(whitelistEntries, ",")),
+	)
+
 	for _, entry := range whitelistEntries {
 		out[entry] = true
+		// todo remove
+		zlog.Info("adding whitelist",
+			zap.String("entry", entry),
+		)
 		// todo check if valid ip?
 	}
 	return out, nil
