@@ -127,6 +127,7 @@ func (c *requestCounter) updateRemoteCounter(at time.Time) (empty bool, err erro
 			return false, err
 		}
 
+		// todo remove
 		zlog.Info("incremented counter",
 			zap.String("key", currKey),
 			zap.Int64("by", localCount),
@@ -261,10 +262,18 @@ func (r *RequestRateLimiter) Gate(
 
 	c := r.getCounter(uid, time.Now().UTC())
 	lastMinCount := estimateLastMinuteCount(c.remoteCountCurrent, c.remoteCountPrevious, c.remotePreviousSeconds, c.localCount)
+
 	if lastMinCount < limit {
 		c.localCount.Inc()
 		allow = true
 	}
+
+	// todo remove
+	zlog.Info("gate called",
+		zap.Int64("last_min_count", lastMinCount),
+		zap.Int64("limit", limit),
+		zap.Bool("allowed", allow),
+	)
 
 	return
 }
