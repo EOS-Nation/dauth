@@ -1,7 +1,7 @@
 package null
 
 import (
-	"github.com/dfuse-io/dauth/ratelimiter"
+	"github.com/eosnationftw/dauth/ratelimiter"
 )
 
 func init() {
