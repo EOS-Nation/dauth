@@ -19,7 +19,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/eosnationftw/dauth/authenticator"
+	"github.com/dfuse-io/dauth/authenticator"
 	"go.uber.org/zap"
 )
 

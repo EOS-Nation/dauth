@@ -1,4 +1,4 @@
-module github.com/eosnationftw/dauth
+module github.com/dfuse-io/dauth
 
 require (
 	github.com/buraksezer/olric v0.2.0

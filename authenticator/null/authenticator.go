@@ -17,7 +17,7 @@ package null
 import (
 	"context"
 
-	"github.com/eosnationftw/dauth/authenticator"
+	"github.com/dfuse-io/dauth/authenticator"
 	"go.uber.org/zap"
 )
 

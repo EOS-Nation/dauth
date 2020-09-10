@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/eosnationftw/dauth/authenticator"
+	"github.com/dfuse-io/dauth/authenticator"
 	"github.com/dfuse-io/derr"
 	"google.golang.org/grpc/codes"
 )
