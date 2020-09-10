@@ -14,13 +14,20 @@
 
 package null
 
-import "go.uber.org/zap"
+import (
+	"fmt"
+	"go.uber.org/zap"
+)
 
 type credentials struct {
 	ipAddress string
 }
 
 func (c *credentials) GetUserID() string {
+
+	// todo remove
+	fmt.Printf("returning ip address as user id: %s", c.ipAddress)
+
 	return c.ipAddress
 }
 
