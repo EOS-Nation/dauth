@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func parseURL(configURL string) (olricPeers []string, userRateLimits map[string]int64, err error) {
+func parseURL(configURL string) (olricPeers []string, userRateLimits map[string]int64, whitelistedIps map[string]bool, err error) {
 	urlObject, err := url.Parse(configURL)
 	if err != nil {
 		return
@@ -37,12 +37,22 @@ func parseURL(configURL string) (olricPeers []string, userRateLimits map[string]
 	if userRateLimitsString == "" {
 		// rate limits are optional
 		userRateLimits = map[string]int64{}
-		return
+	} else {
+		userRateLimits, err = constructRateLimits(userRateLimitsString)
+		if err != nil {
+			return
+		}
 	}
 
-	userRateLimits, err = constructRateLimits(userRateLimitsString)
-	if err != nil {
-		return
+	whitelistedIpsString := values.Get("whitelist")
+	if whitelistedIpsString == "" {
+		// whitelist is optional
+		whitelistedIps = map[string]bool{}
+	} else {
+		whitelistedIps, err = constructWhitelist(whitelistedIpsString)
+		if err != nil {
+			return
+		}
 	}
 
 	return
@@ -54,6 +64,17 @@ func constructRateLimits(in string) (map[string]int64, error) {
 		return nil, err
 	}
 	return userRateLimits, nil
+}
+
+func constructWhitelist(in string) (map[string]bool, error) {
+	whitelistEntries := strings.Split(in, ",")
+	out := make(map[string]bool)
+
+	for _, entry := range whitelistEntries {
+		out[entry] = true
+		// todo check if valid ip?
+	}
+	return out, nil
 }
 
 func parseRateLimitsString(in string) (map[string]int64, error) {

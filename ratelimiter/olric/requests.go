@@ -18,7 +18,7 @@ func init() {
 	// olric://local?rates=search:60,block:60,blockmeta:60,token:60"
 	ratelimiter.Register("olric", func(configURL string) (ratelimiter.RateLimiter, error) {
 		zlog.Info("parsing rate limiter settings", zap.String("url", configURL))
-		olricPeers, userRateLimits, err := parseURL(configURL)
+		olricPeers, userRateLimits, whitelistedIps, err := parseURL(configURL)
 		if err != nil {
 			return nil, fmt.Errorf("olric factory: %w", err)
 		}
@@ -69,16 +69,17 @@ func init() {
 			return nil, fmt.Errorf("failed to create dmap: %w", err)
 		}
 
-		requestRateLimiter := NewRequestRateLimiter(db, olricDMap, userRateLimits)
+		requestRateLimiter := NewRequestRateLimiter(db, olricDMap, userRateLimits, whitelistedIps)
 		return requestRateLimiter, nil
 	})
 }
 
-func NewRequestRateLimiter(olricClient *olric.Olric, olricDMap *olric.DMap, limits map[string]int64) *RequestRateLimiter {
+func NewRequestRateLimiter(olricClient *olric.Olric, olricDMap *olric.DMap, limits map[string]int64, whitelist map[string]bool) *RequestRateLimiter {
 	return &RequestRateLimiter{
 		olricClient: olricClient,
 		olricDMap:   olricDMap,
 		limits:      limits,
+		whitelist:   whitelist,
 		counters:    make(map[string]*requestCounter),
 	}
 }
@@ -90,6 +91,7 @@ type RequestRateLimiter struct {
 	counters    map[string]*requestCounter
 	mutex       sync.RWMutex
 	limits      map[string]int64
+	whitelist   map[string]bool
 }
 
 type requestCounter struct {
@@ -263,7 +265,7 @@ func (r *RequestRateLimiter) Gate(
 	c := r.getCounter(uid, time.Now().UTC())
 	lastMinCount := estimateLastMinuteCount(c.remoteCountCurrent, c.remoteCountPrevious, c.remotePreviousSeconds, c.localCount)
 
-	if lastMinCount < limit {
+	if lastMinCount < limit || r.whitelist[uid] {
 		c.localCount.Inc()
 		allow = true
 	}
@@ -273,6 +275,7 @@ func (r *RequestRateLimiter) Gate(
 		zap.Int64("last_min_count", lastMinCount),
 		zap.Int64("limit", limit),
 		zap.Bool("allowed", allow),
+		zap.Bool("whitelisted", r.whitelist[uid]),
 	)
 
 	return
