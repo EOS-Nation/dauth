@@ -21,7 +21,7 @@ type credentials struct {
 }
 
 func (c *credentials) GetUserID() string {
-	return ""
+	return c.ipAddress
 }
 
 func newCredentials(ipAddress string) *credentials {
