@@ -3,9 +3,6 @@ package ratelimiter
 import (
 	"fmt"
 	"net/url"
-
-	_ "github.com/dfuse-io/dauth/ratelimiter/null"
-	_ "github.com/dfuse-io/dauth/ratelimiter/olric"
 )
 
 type RateLimiter interface {
