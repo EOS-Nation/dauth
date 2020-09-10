@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/buraksezer/olric"
 	"github.com/buraksezer/olric/config"
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -47,19 +46,19 @@ func init() {
 		ctx, cancel := context.WithCancel(context.Background())
 		olricConfig.Started = func() {
 			defer cancel()
-			log.Println("[INFO] Olric is ready to accept connections")
+			zlog.Info("olric is ready to accept connections")
 		}
 
 		db, err := olric.New(olricConfig)
 		if err != nil {
-			log.Fatalf("Failed to create Olric instance: %v", err)
+			return nil, fmt.Errorf("failed to create olric instance: %w", err)
 		}
 
 		go func() {
 			// Call Start at background. It's a blocker call.
 			err = db.Start()
 			if err != nil {
-				log.Fatalf("olric.Start returned an error: %v", err)
+				zlog.Fatal("olric.Start returned an error", zap.Error(err))
 			}
 		}()
 
@@ -128,6 +127,12 @@ func (c *requestCounter) updateRemoteCounter(at time.Time) (empty bool, err erro
 			return false, err
 		}
 
+		zlog.Info("incremented counter",
+			zap.String("key", currKey),
+			zap.Int64("by", localCount),
+			zap.Int("to", res),
+		)
+
 		c.remoteCountCurrent = int64(res)
 	} else {
 		curr, err := c.olricDMap.Get(currKey)
@@ -136,7 +141,7 @@ func (c *requestCounter) updateRemoteCounter(at time.Time) (empty bool, err erro
 		} else if err == olric.ErrKeyNotFound {
 			c.remoteCountCurrent = 0
 		} else {
-			c.remoteCountCurrent = curr.(int64)
+			c.remoteCountCurrent = int64(curr.(int))
 		}
 	}
 
@@ -146,7 +151,7 @@ func (c *requestCounter) updateRemoteCounter(at time.Time) (empty bool, err erro
 	} else if err == olric.ErrKeyNotFound {
 		c.remoteCountPrevious = 0
 	} else {
-		c.remoteCountPrevious = prev.(int64)
+		c.remoteCountPrevious = int64(prev.(int))
 	}
 	c.remotePreviousSeconds = secs
 
@@ -203,14 +208,14 @@ func (r *RequestRateLimiter) getCounter(uid string, at time.Time) *requestCounte
 	if err != nil {
 		zlog.Debug("olric error getting current", zap.Error(err), zap.String("uid", uid))
 	} else {
-		cur = res.(int64)
+		cur = int64(res.(int))
 	}
 
 	res, err = r.olricDMap.Get(prevKey)
 	if err != nil {
 		zlog.Debug("olric error getting previous", zap.Error(err), zap.String("uid", uid))
 	} else {
-		prev = res.(int64)
+		prev = int64(res.(int))
 	}
 
 	c = &requestCounter{
