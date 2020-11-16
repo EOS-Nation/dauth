@@ -1,0 +1,3 @@
+generate.sh - Wed May 13 09:27:54 EDT 2020 - julien
+dfuse-io/proto revision: 122dada4c9812eb941d59929216ef79951f3eabe
+dfuse-io/proto-saas-priv revision: 9f5e78e567e75219c98fe77553bc0e16741db204
