@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dfuse-io/dauth/dredd"
+	"go.uber.org/zap"
 	"net/url"
 	"strings"
 	"time"
@@ -120,6 +121,8 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 	// todo only if jwt is disabled
 	credentials.Subject = "uid:" + ipAddress
 
+	zlog.Info("access token", zap.String("token", token))
+
 	if a.enforceAuth {
 		// todo implement
 		/*
@@ -142,7 +145,9 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 	}
 
 	authContext := authenticator.WithCredentials(ctx, credentials)
-	if a.enforceQuota {
+
+	// todo remove hard coded eosq token
+	if a.enforceQuota || token == "csjBpe8I3UoJP6oqk5iYCCKF" {
 		//zlog.Debug("adding cutoff to context", zap.String("user_id", credentials.Subject))
 		withCutOffCtx, setCredentials := ContextWithCutOff(authContext)
 		err := setCredentials(credentials)
