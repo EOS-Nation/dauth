@@ -147,7 +147,7 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 	authContext := authenticator.WithCredentials(ctx, credentials)
 
 	// todo remove hard coded eosq token
-	if a.enforceQuota && token != "csjBpe8I3UoJP6oqk5iYCCKF" {
+	if a.enforceQuota && token != "a.b.c" {
 		//zlog.Debug("adding cutoff to context", zap.String("user_id", credentials.Subject))
 		withCutOffCtx, setCredentials := ContextWithCutOff(authContext)
 		err := setCredentials(credentials)
