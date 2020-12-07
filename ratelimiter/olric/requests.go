@@ -265,7 +265,7 @@ func (r *RequestRateLimiter) Gate(
 	c := r.getCounter(uid, time.Now().UTC())
 	lastMinCount := estimateLastMinuteCount(c.remoteCountCurrent, c.remoteCountPrevious, c.remotePreviousSeconds, c.localCount)
 
-	if lastMinCount < limit || r.whitelist[uid] {
+	if lastMinCount < limit || r.whitelist[id] {
 		c.localCount.Inc()
 		allow = true
 	}
