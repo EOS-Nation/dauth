@@ -147,7 +147,7 @@ func newAuthenticator(redisNodes []string, enforceQuota bool, jwtKey string, quo
 			if jwtKey == "" {
 				return nil, fmt.Errorf("no jwt key set")
 			}
-			return jwtKey, nil
+			return []byte(jwtKey), nil
 		},
 		ipQuotaHandler: ipQuotaHandler,
 		enforceQuota:   enforceQuota,
