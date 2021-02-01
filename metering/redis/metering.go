@@ -9,7 +9,6 @@ import (
 	"github.com/dfuse-io/derr"
 	"github.com/go-redis/redis/v8"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -35,31 +34,6 @@ func init() {
 			return nil, fmt.Errorf("missing networkId query param to metering config")
 		}
 
-		ipQuotaFile := vals.Get("ipQuotaFile")
-		defaultQuotaString := vals.Get("defaultQuota")
-		var ipQuotaHandler *dredd.IpQuotaHandler
-
-		if defaultQuotaString != "" {
-			defaultQuota, err := strconv.Atoi(defaultQuotaString)
-
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse default quota, expected integer: %s", defaultQuotaString)
-			}
-
-			if ipQuotaFile == "" {
-				ipQuotaHandler = dredd.NewIpQuotaHandler(defaultQuota)
-			} else {
-				ipQuotaHandler, err = dredd.NewIpQuotaHandlerFromFile(ipQuotaFile, defaultQuota)
-
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse ip quota file: %e", err)
-				}
-			}
-		} else {
-			zlog.Warn("no default quota set, there won't be any rate limiting")
-			ipQuotaHandler = dredd.NewIpQuotaHandler(0)
-		}
-
 		var emitterDelay = 10 * time.Second
 		emitterDelayString := vals.Get("emitterDelay")
 		if emitterDelayString != "" {
@@ -82,7 +56,7 @@ func init() {
 
 		warnOnErrors := vals.Get("warnOnErrors") == "true"
 
-		return newMetering(networkID, hosts, topic, warnOnErrors, emitterDelay, nil, ipQuotaHandler), nil
+		return newMetering(networkID, hosts, topic, warnOnErrors, emitterDelay, nil), nil
 	})
 }
 
@@ -93,23 +67,20 @@ type meteringPlugin struct {
 	warnOnPubSubErrors bool
 	pubSubTopic        string
 
-	quotaHandler *dredd.IpQuotaHandler
-
 	messagesCount atomic.Uint64
 	errorCount    atomic.Uint64
 
-	luaHandler   *dredd.LuaEventHandler
-	accumulator  *Accumulator
+	luaHandler  *dredd.LuaEventHandler
+	accumulator *Accumulator
 }
 
 // type topicProviderFunc func(pubsubProject string, topicName string) *pubsub.Topic
 type topicEmitterFunc func(e *pbbilling.Event)
 
-func newMetering(network string, hosts []string, pubSubTopic string, warnOnPubSubErrors bool, emitterDelay time.Duration, /*topicProvider topicProviderFunc,*/ topicEmitter topicEmitterFunc, quotaHandler *dredd.IpQuotaHandler) *meteringPlugin {
+func newMetering(network string, hosts []string, pubSubTopic string, warnOnPubSubErrors bool, emitterDelay time.Duration, /*topicProvider topicProviderFunc,*/ topicEmitter topicEmitterFunc) *meteringPlugin {
 	m := &meteringPlugin{
 		network:            network,
 		warnOnPubSubErrors: warnOnPubSubErrors,
-		quotaHandler:       quotaHandler,
 	}
 
 	m.redisClient = redis.NewFailoverClient(&redis.FailoverOptions{
@@ -161,6 +132,8 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 		IdleTime:          ev.IdleTime,
 	}
 
+	quota := 0
+
 	switch c := creds.(type) {
 	case *authenticator.AnonymousCredentials:
 		userEvent.UserId = "anonymous"
@@ -170,19 +143,14 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 	case *redis_auth.Credentials:
 		// userEvent.UserId = c.Subject
 		userEvent.UserId = c.IP
-		userEvent.ApiKeyId = c.APIKeyID
-		userEvent.Usage = c.Usage
+		// userEvent.ApiKeyId = c.APIKeyID
+		// userEvent.Usage = c.Usage
 		userEvent.IpAddress = c.IP
-	}
-
-	docQuota, err := m.quotaHandler.GetQuota(userEvent.UserId)
-
-	if err != nil {
-		zlog.Warn("failed to get doc quota", zap.String("user_id", userEvent.UserId), zap.Error(err))
+		quota = c.Quota
 	}
 
 	// todo add doc quota
-	_, err = m.luaHandler.HandleEvent(userEvent, docQuota)
+	_, err := m.luaHandler.HandleEvent(userEvent, quota)
 
 	if err != nil {
 		zlog.Warn("failed to execute lua script", zap.Error(err))

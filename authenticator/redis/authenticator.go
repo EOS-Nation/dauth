@@ -16,10 +16,12 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/dfuse-io/dauth/dredd"
-	"go.uber.org/zap"
+	"github.com/form3tech-oss/jwt-go"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,20 +29,26 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+type authenticatorPlugin struct {
+	ipQuotaHandler         *dredd.IpQuotaHandler
+	kmsVerificationKeyFunc jwt.Keyfunc
+	enforceQuota           bool
+}
+
 func init() {
-	// redis://redis1,redis2,redis3?quotaEnforce=true&jwtKey=abc123&quotaBlacklistUpdateInterval=5s
+	// redis://redis1,redis2,redis3?quotaEnforce=true&jwtKey=abc123&quotaBlacklistUpdateInterval=5s&ipQuotaFile=/etc/quota.yml&defaultIpQuota=10
 	authenticator.Register("redis", func(configURL string) (authenticator.Authenticator, error) {
 
-		redisNodes, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, whitelistedIps, err := parseURL(configURL)
+		redisNodes, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, ipQuotaHandler, err := parseURL(configURL)
 
 		if err != nil {
 			return nil, fmt.Errorf("redis auth factory: %w", err)
 		}
-		return newAuthenticator(redisNodes, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, whitelistedIps), nil
+		return newAuthenticator(redisNodes, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, ipQuotaHandler), nil
 	})
 }
 
-func parseURL(configURL string) (redisNodes []string, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, whitelistedIps map[string]bool, err error) {
+func parseURL(configURL string) (redisNodes []string, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpQuotaHandler, err error) {
 	urlObject, err := url.Parse(configURL)
 	if err != nil {
 		return
@@ -68,7 +76,45 @@ func parseURL(configURL string) (redisNodes []string, enforceQuota bool, jwtKey 
 		return
 	}
 
-	whitelistedIpsString := values.Get("whitelist")
+	// don't parse and error handle quota settings if we don't enforce it anyways
+	if !enforceQuota {
+		return
+	}
+
+	ipQuotaFile := values.Get("ipQuotaFile")
+	defaultIpQuotaString := values.Get("defaultIpQuota")
+
+	if defaultIpQuotaString != "" {
+		var defaultIpQuota int
+		defaultIpQuota, err = strconv.Atoi(defaultIpQuotaString)
+
+		if err != nil {
+			err = fmt.Errorf("failed to parse default ip quota, expected integer: %s", defaultIpQuotaString)
+			return
+		}
+
+		if ipQuotaFile == "" {
+			ipQuotaHandler = dredd.NewIpQuotaHandler(defaultIpQuota)
+		} else {
+			ipQuotaHandler, err = dredd.NewIpQuotaHandlerFromFile(ipQuotaFile, defaultIpQuota)
+
+			if err != nil {
+				err = fmt.Errorf("failed to parse ip quota file: %e", err)
+				return
+			}
+		}
+	} else {
+		if ipQuotaFile != "" {
+			err = fmt.Errorf("ip quota file given, but defaultIpQuota is not set")
+			return
+		}
+		if jwtKey == "" {
+			err = fmt.Errorf("enforceQuota is set but neither a jwt key or ip based quota handling is configured")
+			return
+		}
+	}
+
+	/*whitelistedIpsString := values.Get("whitelist")
 	if whitelistedIpsString == "" {
 		// whitelist is optional
 		whitelistedIps = map[string]bool{}
@@ -80,22 +126,12 @@ func parseURL(configURL string) (redisNodes []string, enforceQuota bool, jwtKey 
 			// todo check if valid ip?
 			whitelistedIps[entry] = true
 		}
-	}
+	}*/
 
 	return
 }
 
-type authenticatorPlugin struct {
-	// kmsVerificationKeyFunc jwt.Keyfunc
-	enforceAuth  bool
-	enforceQuota bool
-}
-
-func newAuthenticator(redisNodes []string, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, whitelistedIps map[string]bool) *authenticatorPlugin {
-
-	// todo add jwt Keyfunc if jwtKey is set
-	enforceAuth := jwtKey != ""
-
+func newAuthenticator(redisNodes []string, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpQuotaHandler) *authenticatorPlugin {
 	redisClient := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    "mymaster",
 		SentinelAddrs: redisNodes,
@@ -105,9 +141,14 @@ func newAuthenticator(redisNodes []string, enforceQuota bool, jwtKey string, quo
 	Setup(dreddDB, quotaBlacklistUpdateInterval)
 
 	return &authenticatorPlugin{
-		// kmsVerificationKeyFunc: kmsVerificationKeyFunc,
-		enforceAuth:  enforceAuth,
-		enforceQuota: enforceQuota,
+		kmsVerificationKeyFunc: func(token *jwt.Token) (interface{}, error) {
+			if jwtKey == "" {
+				return nil, fmt.Errorf("no jwt key set")
+			}
+			return jwtKey, nil
+		},
+		ipQuotaHandler: ipQuotaHandler,
+		enforceQuota:   enforceQuota,
 	}
 }
 
@@ -118,36 +159,43 @@ func (a *authenticatorPlugin) IsAuthenticationTokenRequired() bool {
 func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string) (context.Context, error) {
 	credentials := &Credentials{}
 	credentials.IP = ipAddress
-	// todo only if jwt is disabled
-	credentials.Subject = "uid:" + ipAddress
 
-	zlog.Info("access token", zap.String("token", token))
+	// if we have a token, try to get the credentials from it. A given token must always be valid
+	if token != "" {
+		parsedToken, err := jwt.ParseWithClaims(token, credentials, a.kmsVerificationKeyFunc)
 
-	if a.enforceAuth {
-		// todo implement
-		/*
-			parsedToken, err := jwt.ParseWithClaims(token, credentials, a.kmsVerificationKeyFunc)
+		if err != nil {
+			return ctx, err
+		}
+		if !parsedToken.Valid {
+			return ctx, errors.New("unable to verify token")
+		}
+	} else {
+		credentials.Subject = "uid:" + ipAddress
+
+		// if we don't have a token, see if ip based quota handling is enabled and retrieve credentials from there
+		if a.ipQuotaHandler != nil {
+			quota, err := a.ipQuotaHandler.GetQuota(ipAddress)
+			credentials.Quota = quota
 
 			if err != nil {
 				return ctx, err
 			}
-			expectedSigningAlgorithm := gcpjwt.SigningMethodKMSES256.Alg()
-			actualSigningAlgorithm := parsedToken.Header["alg"]
+		} else if a.enforceQuota {
+			return ctx, errors.New("no token given")
+		}
+		/*} else if !a.enforceQuota {
+			// we don't enforce, set the quota to unlimited
+			credentials.Quota = 0
+		} else {
+			return ctx, errors.New("no token given")
+		}*/
 
-			if expectedSigningAlgorithm != actualSigningAlgorithm {
-				return ctx, fmt.Errorf("expected %s signing method but token specified %s", expectedSigningAlgorithm, actualSigningAlgorithm)
-			}
-
-			if !parsedToken.Valid {
-				return ctx, errors.New("unable to verify token")
-			}
-		*/
 	}
 
 	authContext := authenticator.WithCredentials(ctx, credentials)
 
-	// todo remove hard coded eosq token
-	if a.enforceQuota && token != "a.b.c" {
+	if a.enforceQuota {
 		//zlog.Debug("adding cutoff to context", zap.String("user_id", credentials.Subject))
 		withCutOffCtx, setCredentials := ContextWithCutOff(authContext)
 		err := setCredentials(credentials)

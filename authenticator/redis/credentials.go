@@ -15,29 +15,32 @@
 package redis
 
 import (
-	"strings"
-
-	"github.com/dgrijalva/jwt-go"
+	"github.com/form3tech-oss/jwt-go"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type Credentials struct {
 	jwt.StandardClaims
 
-	// DEPRECATED
-	Tier string `json:"tier,omitempty"`
+	Quota int    `json:"quota"`
+	IP    string `json:"-"`
+	/*
+		// DEPRECATED
+		Tier string `json:"tier,omitempty"`
 
-	// From JWT
-	Version    int    `json:"v"`
-	Usage      string `json:"usg"`
-	APIKeyID   string `json:"aki"`
-	Origin     string `json:"origin,omitempty"`
-	StartBlock int64  `json:"stblk,omitempty"`
+		// From JWT
+		Version    int    `json:"v"`
+		Usage      string `json:"usg"`
+		APIKeyID   string `json:"aki"`
+		Origin     string `json:"origin,omitempty"`
+		StartBlock int64  `json:"stblk,omitempty"`
 
-	PlanTier     int32   `json:"plan"`
-	FeatureFlags []int32 `json:"opts,omitempty"`
+		PlanTier     int32   `json:"plan"`
+		FeatureFlags []int32 `json:"opts,omitempty"`
 
-	IP string `json:"-"`
+		IP string `json:"-"`
+	*/
 }
 
 func (c *Credentials) GetUserID() string {
@@ -45,24 +48,11 @@ func (c *Credentials) GetUserID() string {
 	return strings.TrimPrefix(userID, "uid:")
 }
 
-var validUsage = map[string]bool{
-	"web":    true,
-	"server": true,
-	"mobile": true,
-	"worker": true,
-}
-
-var validTiers = map[string]bool{
-	"free-v1": true,
-	"cust-v1": true,
-	"eosq-v1": true,
-}
-
 func (c *Credentials) GetLogFields() []zap.Field {
 	return []zap.Field{
 		zap.String("subject", c.Subject),
 		zap.String("jti", c.Id),
-		zap.String("api_key_id", c.APIKeyID),
+		// zap.String("api_key_id", c.APIKeyID),
 		zap.String("ip", c.IP),
 	}
 }

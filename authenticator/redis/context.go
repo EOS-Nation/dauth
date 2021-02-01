@@ -50,10 +50,10 @@ func Setup(ddb *dredd.DB, blacklistUpdateInterval time.Duration) {
 				continue
 			}
 			/*
-			if v == blackListVersion {
-				continue
-			}
-			 */
+				if v == blackListVersion {
+					continue
+				}
+			*/
 			blackListVersion = v
 			zlog.Info("updating black, new version available", zap.Int("user_black_list", blackListVersion))
 

@@ -23,7 +23,7 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/dfuse-io/dauth/authenticator"
 	"github.com/dfuse-io/dauth/dredd"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/form3tech-oss/jwt-go"
 	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

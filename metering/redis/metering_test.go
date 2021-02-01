@@ -11,7 +11,7 @@ import (
 	auth_redis "github.com/dfuse-io/dauth/authenticator/redis"
 	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
 	"github.com/dfuse-io/dmetering"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/form3tech-oss/jwt-go"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
