@@ -178,18 +178,26 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 		if !parsedToken.Valid {
 			return ctx, errors.New("unable to verify token")
 		}
+
+		zlog.Info("parsed token successfully into", zap.Any("credentials", credentials))
 	} else {
 		credentials.Subject = "uid:" + ipAddress
 
 		// if we don't have a token, see if ip based quota handling is enabled and retrieve credentials from there
 		if a.ipQuotaHandler != nil {
+
+			zlog.Info("trying to load quota from ip quota handler", zap.Any("quta_handler", a.ipQuotaHandler))
+
 			quota, err := a.ipQuotaHandler.GetQuota(ipAddress)
 			credentials.Quota = quota
 
 			if err != nil {
 				return ctx, err
 			}
+
+			zlog.Info("created ip quota based credentials", zap.Any("credentials", credentials))
 		} else if a.enforceQuota {
+			zlog.Info("didn't get a token but required one")
 			return ctx, errors.New("no token given")
 		}
 		/*} else if !a.enforceQuota {
@@ -207,6 +215,9 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 		//zlog.Debug("adding cutoff to context", zap.String("user_id", credentials.Subject))
 		withCutOffCtx, setCredentials := ContextWithCutOff(authContext)
 		err := setCredentials(credentials)
+
+		zlog.Info("created cutoff context", zap.Any("context", withCutOffCtx), zap.Error(err))
+
 		if err != nil {
 			return withCutOffCtx, err
 		}

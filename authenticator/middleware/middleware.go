@@ -17,6 +17,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 
@@ -57,6 +58,8 @@ func (middleware *AuthMiddleware) Handler(next http.Handler) http.Handler {
 			middleware.errorHandler(w, ctx, derr.Statusf(codes.Unauthenticated, "invalid token provided: %s", err.Error()))
 			return
 		}
+
+		zlog.Info("auth context", zap.Any("nextCtx", nextCtx), zap.Error(err))
 
 		next.ServeHTTP(w, r.WithContext(nextCtx))
 	})
