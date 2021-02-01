@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/dfuse-io/dauth/dredd"
 	"github.com/form3tech-oss/jwt-go"
+	"go.uber.org/zap"
 	"net/url"
 	"strconv"
 	"strings"
@@ -33,6 +34,7 @@ type authenticatorPlugin struct {
 	ipQuotaHandler         *dredd.IpQuotaHandler
 	kmsVerificationKeyFunc jwt.Keyfunc
 	enforceQuota           bool
+	enforceAuth            bool
 }
 
 func init() {
@@ -149,11 +151,13 @@ func newAuthenticator(redisNodes []string, enforceQuota bool, jwtKey string, quo
 		},
 		ipQuotaHandler: ipQuotaHandler,
 		enforceQuota:   enforceQuota,
+		// token is required if we don't have a ip quota handler but enforce doc quota
+		enforceAuth: ipQuotaHandler == nil && enforceQuota,
 	}
 }
 
 func (a *authenticatorPlugin) IsAuthenticationTokenRequired() bool {
-	return true
+	return a.enforceAuth
 }
 
 func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string) (context.Context, error) {
@@ -163,6 +167,10 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 	// if we have a token, try to get the credentials from it. A given token must always be valid
 	if token != "" {
 		parsedToken, err := jwt.ParseWithClaims(token, credentials, a.kmsVerificationKeyFunc)
+
+		zlog.Info("access token", zap.String("token", token))
+		zlog.Info("decoding issue", zap.Error(err))
+		zlog.Info("parsed token", zap.Any("parsed_token", parsedToken))
 
 		if err != nil {
 			return ctx, err
