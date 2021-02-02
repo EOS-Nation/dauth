@@ -142,7 +142,7 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 		userEvent.IpAddress = "0.0.0.0"
 	case *redis_auth.Credentials:
 		// userEvent.UserId = c.Subject
-		userEvent.UserId = c.IP
+		userEvent.UserId = c.Subject
 		// userEvent.ApiKeyId = c.APIKeyID
 		// userEvent.Usage = c.Usage
 		userEvent.IpAddress = c.IP
