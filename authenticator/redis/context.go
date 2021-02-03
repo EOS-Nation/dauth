@@ -68,7 +68,7 @@ func Setup(ddb *dredd.DB, blacklistUpdateInterval time.Duration) {
 				blackListLock.Unlock()
 				continue
 			}
-			zlog.Debug("updating black list:", zap.Int("id_count", len(ids)))
+			zlog.Debug("updating black list:", zap.Int("id_count", len(ids)), zap.Any("ids", ids))
 			for _, id := range ids {
 				blacklistedUserIDs[id] = true
 			}
