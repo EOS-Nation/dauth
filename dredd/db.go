@@ -154,15 +154,12 @@ func (d *DB) BlackListedUsers() (userIDs []string, err error) {
 
 	for _, v := range result.Val() {
 		parts := strings.Split(v, ":")
-		id := parts[1] + ":" + parts[2]
-		/* todo we include the uid: part to distinguish from oid
-			id := parts[1]
-			if id == "uid" {
-				id = parts[2]
-			}
 
-		*/
-		userIDs = append(userIDs, id)
+		// todo always use uid prefix???
+		if len(parts) > 2 {
+			id := parts[1] + ":" + parts[2]
+			userIDs = append(userIDs, id)
+		}
 	}
 
 	return
