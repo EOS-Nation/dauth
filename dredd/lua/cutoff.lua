@@ -85,9 +85,9 @@ if redis.call("INCRBY", userMinutelyDocConsumptionKey, consumeDocument) == consu
     redis.call("EXPIRE", userMinutelyDocConsumptionKey, 60 * windowSize)
 end
 
---- Skip paying customer
+--- Skip unlimited access
 if allocatedDocumentCount == 0 then
-    -- paying customer
+    -- unlimited access
     return "unlimited"
 end
 

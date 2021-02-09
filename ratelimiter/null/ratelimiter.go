@@ -6,8 +6,8 @@ import (
 
 func init() {
 	// null://
-	ratelimiter.Register("null", func(configURL string) (requestRateLimiter ratelimiter.RateLimiter, err error) {
-		return requestRateLimiter, err
+	ratelimiter.Register("null", func(configURL string) (ratelimiter.RateLimiter, error) {
+		return NewRequestRateLimiter(), nil
 	})
 }
 
