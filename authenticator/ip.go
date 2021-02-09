@@ -15,13 +15,20 @@
 package authenticator
 
 import (
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 )
 
 func RealIPFromRequest(r *http.Request) string {
 	xForwardedFor := r.Header.Get("X-Forwarded-For")
-	return RealIP(xForwardedFor)
+	if xForwardedFor != "" {
+		return RealIP(xForwardedFor)
+	}
+
+	zlog.Info("extracting ip address from request", zap.String("forwarded", xForwardedFor), zap.String("remote", r.RemoteAddr))
+
+	return r.RemoteAddr
 }
 
 func RealIP(forwardIPs string) string {
