@@ -83,7 +83,7 @@ func (l *LuaEventHandler) HandleEvent(ev *pbbilling.Event, docQuota int) (bool, 
 		blacklisted = (luaRespStr == "bl")
 	}
 
-	zlog.Info("result lua script", zap.Reflect("result", zap.Any("result", result)))
+	zlog.Info("result lua script", zap.Reflect("result", zap.Any("result", result)), zap.Any("result string", luaRespStr))
 
 	if result.Err() != nil {
 		return blacklisted, fmt.Errorf("failed to eval rate limit script: %w", result.Err())

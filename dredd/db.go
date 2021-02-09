@@ -153,12 +153,10 @@ func (d *DB) BlackListedUsers() (userIDs []string, err error) {
 	}
 
 	for _, v := range result.Val() {
-		parts := strings.Split(v, ":")
+		parts := strings.Split(v, keyer.DELIMITER)
 
-		// todo always use uid prefix???
-		if len(parts) > 2 {
-			id := parts[1] + ":" + parts[2]
-			userIDs = append(userIDs, id)
+		if len(parts) > 1 && parts[1] != "VERSION" {
+			userIDs = append(userIDs, parts[1])
 		}
 	}
 
