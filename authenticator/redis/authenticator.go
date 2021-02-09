@@ -216,8 +216,6 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 		withCutOffCtx, setCredentials := ContextWithCutOff(authContext)
 		err := setCredentials(credentials)
 
-		zlog.Info("created cutoff context", zap.Any("context", withCutOffCtx), zap.Error(err))
-
 		if err != nil {
 			return withCutOffCtx, err
 		}

@@ -75,6 +75,8 @@ func (l *LuaEventHandler) HandleEvent(ev *pbbilling.Event, docQuota int) (bool, 
 
 	blacklisted := false
 
+	zlog.Info("calling lua script", zap.Any("keys", keys), zap.Int("doc quota", docQuota), zap.Int64("responses count", ev.ResponsesCount))
+
 	result := l.redisClient.EvalSha(context.Background(), l.scriptSHA1, keys, docQuota, ev.ResponsesCount, endOfWindow.Unix(), 600, 10)
 	luaRespStr, err := result.Result()
 	if err == nil {
