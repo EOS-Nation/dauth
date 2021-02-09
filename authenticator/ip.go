@@ -25,9 +25,9 @@ func RealIPFromRequest(r *http.Request) string {
 
 	var remoteIP string
 
-	if r.RemoteAddr != "" {
-		if ip, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
-			remoteIP = net.ParseIP(ip).String()
+	if remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		if ip := net.ParseIP(remoteAddr); ip != nil {
+			remoteIP = ip.String()
 		}
 	}
 
@@ -46,7 +46,6 @@ func RealIPFromRequest(r *http.Request) string {
 	zlog.Info("extracting ip address from request", zap.String("remote_ip", remoteIP))
 
 	return remoteIP
-
 }
 
 func RealIP(forwardIPs string) string {

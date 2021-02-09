@@ -4,16 +4,17 @@ import (
 	"time"
 )
 
-var BLACK_LIST_USER_KEY_PREFIX = "BLU"
+const BLACK_LIST_USER_KEY_PREFIX = "BLU"
+const DELIMITER = "_"
 
 //DCD:[USER_ID]:[DATE]
 func DocumentConsumptionDaily(userID string, date time.Time) string {
-	return "DCD" + ":" + userID + ":" + date.Format("20060102")
+	return "DCD" + DELIMITER + userID + DELIMITER + date.Format("20060102")
 }
 
-//DCD:[USER_ID]:[DATETIME]
+//DCM:[USER_ID]:[DATETIME]
 func DocumentConsumptionMinutely(userID string, date time.Time) string {
-	return "DCD" + ":" + userID + ":" + date.Format("20060102-1504")
+	return "DCM" + DELIMITER + userID + DELIMITER + date.Format("20060102-1504")
 }
 
 //DCD:[USER_ID]:[DATE]
@@ -38,27 +39,27 @@ func DocumentConsumptionLastWindow(userID string, windowSize int, date time.Time
 
 //DCCP:[USER_ID]
 func CurrentPeriodDocumentConsumption(userID string) string {
-	return "DCCP" + ":" + userID
+	return "DCCP" + DELIMITER + userID
 }
 
 ////IPC:[USER_ID]:[API_KEY]:[DATE]
 //func IPAddressCountByApiKeyKey(userID string, apiKey string, date time.Time) string {
-//	return "IPC:" + userID + ":" + apiKey + ":" + date.Format("20060102")
+//	return "IPC:" + userID + DELIMITER + apiKey + DELIMITER + date.Format("20060102")
 //}
 
 //BLU:[USER_ID]
 func UserIDBlackListKey(userID string) string {
-	return BLACK_LIST_USER_KEY_PREFIX + ":" + userID
+	return BLACK_LIST_USER_KEY_PREFIX + DELIMITER + userID
 }
 
 //BLU:VERSION
 func UserBlackListVersionKey() string {
-	return "BLU:VERSION"
+	return "BLU" + DELIMITER + "VERSION"
 }
 
 ////BLAK_:[USER_ID]:[API_KEY]
 //func APIKeyBlackListKey(userID string, apiKey string) string {
-//	return "BLAK:" + userID + ":" + apiKey
+//	return "BLAK:" + userID + DELIMITER + apiKey
 //}
 
 ////MSTAT:[USER_ID]
@@ -68,10 +69,10 @@ func UserBlackListVersionKey() string {
 
 //QT:[USER_ID]
 func UserQuotaCachePrefix(userID string) string {
-	return "QT:" + userID
+	return "QT" + DELIMITER + userID
 }
 
 //QT:[USER_ID]:[API_KEY_ID]
 func UserQuotaCacheKey(userID string, apiKeyID string) string {
-	return UserQuotaCachePrefix(userID) + ":" + apiKeyID
+	return UserQuotaCachePrefix(userID) + DELIMITER + apiKeyID
 }
