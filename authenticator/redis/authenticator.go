@@ -22,6 +22,7 @@ import (
 	"github.com/form3tech-oss/jwt-go"
 	"go.uber.org/zap"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -72,6 +73,11 @@ func parseURL(configURL string) (redisNodes []string, enforceQuota bool, jwtKey 
 	values := urlObject.Query()
 	enforceQuota = values.Get("quotaEnforce") == "true"
 	jwtKey = values.Get("jwtKey")
+
+	// if we didn't get a jwt key here, try the env variables
+	if jwtKey == "" {
+		jwtKey = os.Getenv("JWT_SIGNING_KEY")
+	}
 
 	quotaBlacklistUpdateInterval, err = time.ParseDuration(values.Get("quotaBlacklistUpdateInterval"))
 	if err != nil {
