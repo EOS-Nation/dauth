@@ -170,24 +170,27 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 	credentials := &Credentials{}
 	credentials.IP = ipAddress
 
+	validToken := false
+
 	// if we have a token, try to get the credentials from it. A given token must always be valid
-	// we exclude dfuse.io tokens from validation checks here which are in the format of (web|server|mobile)_abcdef
-	if token != "" && !strings.Contains(token, "_") {
+	if token != "" {
 		parsedToken, err := jwt.ParseWithClaims(token, credentials, a.kmsVerificationKeyFunc)
 
-		zlog.Info("access token", zap.String("token", token))
-		zlog.Info("decoding issue", zap.Error(err))
-		zlog.Info("parsed token", zap.Any("parsed_token", parsedToken))
-
 		if err != nil {
-			return ctx, err
+			zlog.Warn("failed to decode token", zap.Error(err))
+			// todo return ctx, err
 		}
 		if !parsedToken.Valid {
-			return ctx, errors.New("unable to verify token")
+			zlog.Warn("failed to verify token", zap.Any("token", parsedToken))
+			// todo return ctx, errors.New("unable to verify token")
+		} else {
+			validToken = true
+			zlog.Info("created token based credentials", zap.Any("credentials", credentials))
 		}
+	}
 
-		zlog.Info("created token based credentials", zap.Any("credentials", credentials))
-	} else {
+	// we don't have a valid token, try ip based quota limiting
+	if !validToken {
 		credentials.Subject = "uid:" + ipAddress
 
 		// if we don't have a token, see if ip based quota handling is enabled and retrieve credentials from there
