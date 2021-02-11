@@ -165,7 +165,8 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 	credentials.IP = ipAddress
 
 	// if we have a token, try to get the credentials from it. A given token must always be valid
-	if token != "" {
+	// we exclude dfuse.io tokens from validation checks here which are in the format of (web|server|mobile)_abcdef
+	if token != "" && !strings.Contains(token, "_") {
 		parsedToken, err := jwt.ParseWithClaims(token, credentials, a.kmsVerificationKeyFunc)
 
 		zlog.Info("access token", zap.String("token", token))
@@ -179,15 +180,12 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 			return ctx, errors.New("unable to verify token")
 		}
 
-		zlog.Info("parsed token successfully into", zap.Any("credentials", credentials))
+		zlog.Info("created token based credentials", zap.Any("credentials", credentials))
 	} else {
 		credentials.Subject = "uid:" + ipAddress
 
 		// if we don't have a token, see if ip based quota handling is enabled and retrieve credentials from there
 		if a.ipQuotaHandler != nil {
-
-			zlog.Info("trying to load quota from ip quota handler", zap.Any("quta_handler", a.ipQuotaHandler))
-
 			quota, err := a.ipQuotaHandler.GetQuota(ipAddress)
 			credentials.Quota = quota
 
@@ -200,13 +198,6 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 			zlog.Info("didn't get a token but required one")
 			return ctx, errors.New("no token given")
 		}
-		/*} else if !a.enforceQuota {
-			// we don't enforce, set the quota to unlimited
-			credentials.Quota = 0
-		} else {
-			return ctx, errors.New("no token given")
-		}*/
-
 	}
 
 	authContext := authenticator.WithCredentials(ctx, credentials)
