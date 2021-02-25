@@ -3,15 +3,14 @@ package dredd
 import (
 	"context"
 	"fmt"
+	"github.com/dfuse-io/dauth/dredd/lua"
 	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
-	"io/ioutil"
-	"os"
 	"time"
 
-	"github.com/dfuse-io/dmetrics"
 	"github.com/dfuse-io/dauth/dredd/keyer"
+	"github.com/dfuse-io/dmetrics"
 )
 
 var Metrics = dmetrics.NewSet()
@@ -24,20 +23,20 @@ type LuaEventHandler struct {
 }
 
 func NewLuaEventHandler(redisClient *redis.Client) (*LuaEventHandler, error) {
-	/*	data, err := lua.Asset("cutoff.lua")
-		if err != nil {
-			return nil, fmt.Errorf("bin data err: %w", err)
-		}*/
+	data, err := lua.Asset("cutoff.lua")
+	if err != nil {
+		return nil, fmt.Errorf("bin data err: %w", err)
+	}
 
 	// todo fix hardcoded path
-	file, err := os.Open("/etc/dfuse/cutoff.lua")
-	if err != nil {
-		return nil, fmt.Errorf("failed to open lua script: %w", err)
-	}
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read lua script: %w", err)
-	}
+	//file, err := os.Open("/etc/dfuse/cutoff.lua")
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to open lua script: %w", err)
+	//}
+	//data, err := ioutil.ReadAll(file)
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to read lua script: %w", err)
+	//}
 
 	loadResult := redisClient.ScriptLoad(context.Background(), string(data))
 	if loadResult.Err() != nil {
