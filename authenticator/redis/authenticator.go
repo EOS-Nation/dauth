@@ -42,16 +42,16 @@ func init() {
 	// redis://redis1,redis2,redis3?quotaEnforce=true&jwtKey=abc123&quotaBlacklistUpdateInterval=5s&ipQuotaFile=/etc/quota.yml&defaultIpQuota=10
 	authenticator.Register("redis", func(configURL string) (authenticator.Authenticator, error) {
 
-		redisNodes, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, ipQuotaHandler, err := parseURL(configURL)
+		redisNodes, db, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, ipQuotaHandler, err := parseURL(configURL)
 
 		if err != nil {
 			return nil, fmt.Errorf("redis auth factory: %w", err)
 		}
-		return newAuthenticator(redisNodes, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, ipQuotaHandler), nil
+		return newAuthenticator(redisNodes, db, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, ipQuotaHandler), nil
 	})
 }
 
-func parseURL(configURL string) (redisNodes []string, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpQuotaHandler, err error) {
+func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpQuotaHandler, err error) {
 	urlObject, err := url.Parse(configURL)
 	if err != nil {
 		return
@@ -77,6 +77,18 @@ func parseURL(configURL string) (redisNodes []string, enforceQuota bool, jwtKey 
 	// if we didn't get a jwt key here, try the env variables
 	if jwtKey == "" {
 		jwtKey = os.Getenv("JWT_SIGNING_KEY")
+	}
+
+	dbString := values.Get("redisDB")
+	if dbString == "" {
+		db = 0
+	} else {
+		db, err = strconv.Atoi(dbString)
+
+		if err != nil {
+			err = fmt.Errorf("failed to parse redisDB parameter, not an integer: %s", dbString)
+			return
+		}
 	}
 
 	quotaBlacklistUpdateInterval, err = time.ParseDuration(values.Get("quotaBlacklistUpdateInterval"))
@@ -139,10 +151,11 @@ func parseURL(configURL string) (redisNodes []string, enforceQuota bool, jwtKey 
 	return
 }
 
-func newAuthenticator(redisNodes []string, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpQuotaHandler) *authenticatorPlugin {
+func newAuthenticator(redisNodes []string, db int, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpQuotaHandler) *authenticatorPlugin {
 	redisClient := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    "mymaster",
 		SentinelAddrs: redisNodes,
+		DB:            db,
 	})
 
 	dreddDB := dredd.NewDB(redisClient)
