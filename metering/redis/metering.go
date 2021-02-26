@@ -9,11 +9,12 @@ import (
 	"github.com/dfuse-io/derr"
 	"github.com/go-redis/redis/v8"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dfuse-io/dauth/authenticator"
-	redis_auth "github.com/dfuse-io/dauth/authenticator/redis"
+	redisAuth "github.com/dfuse-io/dauth/authenticator/redis"
 	"github.com/dfuse-io/dmetering"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -54,9 +55,20 @@ func init() {
 			return nil, fmt.Errorf("topic not specified (as path component)")
 		}
 
+		dbString := vals.Get("redisDB")
+		db := 0
+		if dbString != "" {
+			db, err = strconv.Atoi(dbString)
+
+			if err != nil {
+				err = fmt.Errorf("failed to parse redisDB parameter, not an integer: %s", dbString)
+				return nil, err
+			}
+		}
+
 		warnOnErrors := vals.Get("warnOnErrors") == "true"
 
-		return newMetering(networkID, hosts, topic, warnOnErrors, emitterDelay, nil), nil
+		return newMetering(networkID, hosts, db, topic, warnOnErrors, emitterDelay, nil), nil
 	})
 }
 
@@ -77,7 +89,7 @@ type meteringPlugin struct {
 // type topicProviderFunc func(pubsubProject string, topicName string) *pubsub.Topic
 type topicEmitterFunc func(e *pbbilling.Event)
 
-func newMetering(network string, hosts []string, pubSubTopic string, warnOnPubSubErrors bool, emitterDelay time.Duration, /*topicProvider topicProviderFunc,*/ topicEmitter topicEmitterFunc) *meteringPlugin {
+func newMetering(network string, hosts []string, db int, pubSubTopic string, warnOnPubSubErrors bool, emitterDelay time.Duration, /*topicProvider topicProviderFunc,*/ topicEmitter topicEmitterFunc) *meteringPlugin {
 	m := &meteringPlugin{
 		network:            network,
 		warnOnPubSubErrors: warnOnPubSubErrors,
@@ -86,6 +98,7 @@ func newMetering(network string, hosts []string, pubSubTopic string, warnOnPubSu
 	m.redisClient = redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    "mymaster",
 		SentinelAddrs: hosts,
+		DB:            db,
 	})
 
 	m.pubSubTopic = pubSubTopic
@@ -140,7 +153,7 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 		userEvent.ApiKeyId = "anonymous"
 		userEvent.Usage = "anonymous"
 		userEvent.IpAddress = "0.0.0.0"
-	case *redis_auth.Credentials:
+	case *redisAuth.Credentials:
 		// userEvent.UserId = c.Subject
 		userEvent.UserId = c.Subject
 		// userEvent.ApiKeyId = c.APIKeyID

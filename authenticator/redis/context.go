@@ -30,7 +30,6 @@ var limitValidator func(credentials authenticator.Credentials) (exceeded bool, r
 var dreddDB *dredd.DB
 var blackListLock sync.Mutex
 var blacklistedUserIDs = map[string]bool{}
-var blackListVersion = -1
 
 func Setup(ddb *dredd.DB, blacklistUpdateInterval time.Duration) {
 	dreddDB = ddb
@@ -44,24 +43,26 @@ func Setup(ddb *dredd.DB, blacklistUpdateInterval time.Duration) {
 			time.Sleep(sleepDuration)
 			sleepDuration = blacklistUpdateInterval
 
+			/*
 			v, err := dreddDB.UserBlackListVersion()
 			if err != nil {
 				zlog.Error("failed to retrieve black listed version", zap.Error(err))
 				continue
 			}
-			/*
 				if v == blackListVersion {
 					continue
 				}
 			*/
-			blackListVersion = v
-			zlog.Info("updating black, new version available", zap.Int("user_black_list", blackListVersion))
+
+			// zlog.Info("updating black, new version available", zap.Int("user_black_list", blackListVersion))
 
 			ids, err := dreddDB.BlackListedUsers()
 			blackListLock.Lock()
 			blacklistedUserIDs = map[string]bool{}
 
-			zlog.Info("blacklisted user ids", zap.Any("user_ids", blacklistedUserIDs))
+			if len(blacklistedUserIDs) > 0 {
+				zlog.Info("blacklisted user ids", zap.Any("user_ids", blacklistedUserIDs))
+			}
 
 			if err != nil {
 				zlog.Error("failed to retrieve black listed user ids", zap.Error(err))
@@ -79,8 +80,6 @@ func Setup(ddb *dredd.DB, blacklistUpdateInterval time.Duration) {
 	limitValidator = func(creds authenticator.Credentials) (exceeded bool, reason string) {
 		blackListLock.Lock()
 		defer blackListLock.Unlock()
-
-		zlog.Info("checking limits", creds.GetLogFields()...)
 
 		// userID := strings.TrimPrefix(creds.(*Credentials).Subject, "uid:")
 		userID := creds.(*Credentials).Subject

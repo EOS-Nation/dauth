@@ -6,7 +6,6 @@ import (
 	"github.com/dfuse-io/dauth/dredd/lua"
 	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
 	"github.com/go-redis/redis/v8"
-	"go.uber.org/zap"
 	"time"
 
 	"github.com/dfuse-io/dauth/dredd/keyer"
@@ -64,15 +63,11 @@ func (l *LuaEventHandler) HandleEvent(ev *pbbilling.Event, docQuota int) (bool, 
 
 	blacklisted := false
 
-	zlog.Info("calling lua script", zap.Any("keys", keys), zap.Int("doc quota", docQuota), zap.Int64("responses count", ev.ResponsesCount))
-
 	result := l.redisClient.EvalSha(context.Background(), l.scriptSHA1, keys, docQuota, ev.ResponsesCount, endOfWindow.Unix(), 600, 10)
 	luaRespStr, err := result.Result()
 	if err == nil {
 		blacklisted = (luaRespStr == "bl")
 	}
-
-	zlog.Info("result lua script", zap.Reflect("result", zap.Any("result", result)), zap.Any("result string", luaRespStr))
 
 	if result.Err() != nil {
 		return blacklisted, fmt.Errorf("failed to eval rate limit script: %w", result.Err())

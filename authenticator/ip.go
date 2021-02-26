@@ -15,7 +15,6 @@
 package authenticator
 
 import (
-	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"strings"
@@ -42,8 +41,6 @@ func RealIPFromRequest(r *http.Request) string {
 			remoteIP = ip.String()
 		}
 	}
-
-	zlog.Info("extracting ip address from request", zap.String("remote_ip", remoteIP))
 
 	return remoteIP
 }
