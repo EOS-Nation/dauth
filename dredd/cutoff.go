@@ -6,6 +6,7 @@ import (
 	"github.com/dfuse-io/dauth/dredd/lua"
 	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
 	"github.com/go-redis/redis/v8"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/dfuse-io/dauth/dredd/keyer"
@@ -44,6 +45,8 @@ func (l *LuaEventHandler) Test() {
 }
 
 func (l *LuaEventHandler) HandleEvent(ev *pbbilling.Event, docQuota int) (bool, error) {
+
+	zlog.Info("handle_event", zap.Any("event", ev))
 
 	keys := []string{
 		keyer.CurrentPeriodDocumentConsumption(ev.UserId),
