@@ -137,6 +137,7 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 		Source:            ev.Source,
 		Kind:              ev.Kind,
 		Network:           m.network,
+		Method:            ev.Method,
 		RequestsCount:     ev.RequestsCount,
 		ResponsesCount:    ev.ResponsesCount,
 		RateLimitHitCount: ev.RateLimitHitCount,
