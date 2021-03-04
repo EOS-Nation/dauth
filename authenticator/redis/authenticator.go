@@ -204,7 +204,7 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 
 	// we don't have a valid token, try ip based quota limiting
 	if !validToken {
-		credentials.Subject = "uid:" + ipAddress
+		credentials.Subject = "ip:" + ipAddress
 
 		// if we don't have a token, see if ip based quota handling is enabled and retrieve credentials from there
 		if a.ipQuotaHandler != nil {

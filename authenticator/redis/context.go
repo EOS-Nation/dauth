@@ -81,7 +81,6 @@ func Setup(ddb *dredd.DB, blacklistUpdateInterval time.Duration) {
 		blackListLock.Lock()
 		defer blackListLock.Unlock()
 
-		// userID := strings.TrimPrefix(creds.(*Credentials).Subject, "uid:")
 		userID := creds.(*Credentials).Subject
 		if blackListed, _ := blacklistedUserIDs[userID]; blackListed {
 			zlog.Debug("canceling context", zap.String("user_id", userID))

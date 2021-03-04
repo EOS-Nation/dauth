@@ -133,6 +133,9 @@ func (m *meteringPlugin) EmitWithContext(ev dmetering.Event, ctx context.Context
 }
 
 func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authenticator.Credentials) {
+
+	zlog.Info("emit event", zap.Any("event", ev))
+
 	userEvent := &pbbilling.Event{
 		Source:            ev.Source,
 		Kind:              ev.Kind,
