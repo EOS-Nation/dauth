@@ -121,7 +121,7 @@ func (ctx *Context) SetCredentials(credentials authenticator.Credentials) error 
 	ContextWithCutoffCounter.Inc()
 	ctx.credentials = credentials
 	if exceeded, reason := limitValidator(credentials); exceeded {
-		err := fmt.Errorf("black listed: %s", reason)
+		err := fmt.Errorf("blocked: %s", reason)
 		ctx.err.Store(err)
 		ctx.cancelFunc()
 		ContextWithCutoffCanceledCounter.Inc()
@@ -153,7 +153,7 @@ func (ctx *Context) listen() {
 		ctx.credentialsLock.Unlock()
 
 		if exceeded, reason := limitValidator(credentials); exceeded {
-			ctx.err.Store(fmt.Errorf("black listed: %s", reason))
+			ctx.err.Store(fmt.Errorf("blocked: %s", reason))
 			ctx.cancelFunc()
 			ContextWithCutoffCanceledCounter.Inc()
 			return

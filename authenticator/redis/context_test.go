@@ -75,7 +75,7 @@ func TestContext_ExceededLimit(t *testing.T) {
 	setCredentials(credentials)
 	<-ctx.Done()
 	assert.Error(t, ctx.Err())
-	assert.Equal(t, "black listed: document quota exceeded", ctx.Err().Error())
+	assert.Equal(t, "blocked: document quota exceeded", ctx.Err().Error())
 }
 
 func TestContext_ListenOnCloseContext(t *testing.T) {
