@@ -134,8 +134,6 @@ func (m *meteringPlugin) EmitWithContext(ev dmetering.Event, ctx context.Context
 
 func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authenticator.Credentials) {
 
-	zlog.Debug("emit event", zap.Any("event", ev))
-
 	userEvent := &pbbilling.Event{
 		Source:            ev.Source,
 		Kind:              ev.Kind,
@@ -164,7 +162,11 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 		// userEvent.Usage = c.Usage
 		userEvent.IpAddress = c.IP
 		quota = c.Quota
+	default:
+		zlog.Warn("got invalid credentials type", zap.Any("c", c))
 	}
+
+	zlog.Debug("emit event", zap.Any("event", ev), zap.Any("credentials", creds))
 
 	// todo add doc quota
 	_, err := m.luaHandler.HandleEvent(userEvent, quota)
