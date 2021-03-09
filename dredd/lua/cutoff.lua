@@ -75,20 +75,20 @@ if consumeDocument == 0 then
     return 0
 end
 
---- Daily consumption handling
-if redis.call("INCRBY", userDailyDocConsumptionKey, consumeDocument) == consumeDocument then
-    redis.call("EXPIRE", userDailyDocConsumptionKey, 86400)
-end
-
---- Minutely consumption handling
-if redis.call("INCRBY", userMinutelyDocConsumptionKey, consumeDocument) == consumeDocument then
-    redis.call("EXPIRE", userMinutelyDocConsumptionKey, 60 * windowSize)
-end
-
 --- Skip unlimited access
 if allocatedDocumentCount == 0 then
     -- unlimited access
     return "unlimited"
+end
+
+--- Daily consumption handling
+-- if redis.call("INCRBY", userDailyDocConsumptionKey, consumeDocument) == consumeDocument then
+--     redis.call("EXPIRE", userDailyDocConsumptionKey, 86400)
+-- end
+
+--- Minutely consumption handling
+if redis.call("INCRBY", userMinutelyDocConsumptionKey, consumeDocument) == consumeDocument then
+    redis.call("EXPIRE", userMinutelyDocConsumptionKey, 60 * windowSize)
 end
 
 if redis.call("EXISTS", blackListKey) == 1 then
