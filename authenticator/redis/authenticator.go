@@ -134,20 +134,6 @@ func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool,
 		}
 	}
 
-	/*whitelistedIpsString := values.Get("whitelist")
-	if whitelistedIpsString == "" {
-		// whitelist is optional
-		whitelistedIps = map[string]bool{}
-	} else {
-		whitelistEntries := strings.Split(whitelistedIpsString, ",")
-		whitelistedIps = make(map[string]bool)
-
-		for _, entry := range whitelistEntries {
-			// todo check if valid ip?
-			whitelistedIps[entry] = true
-		}
-	}*/
-
 	return
 }
 
@@ -189,11 +175,11 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 	if token != "" {
 		parsedToken, err := jwt.ParseWithClaims(token, credentials, a.kmsVerificationKeyFunc)
 
-		if err != nil {
+		if err != nil { // todo ||parsedToken == nil
 			zlog.Warn("failed to decode token", zap.Error(err))
 			// todo return ctx, err
 		}
-		if !parsedToken.Valid {
+		if parsedToken != nil && !parsedToken.Valid {
 			zlog.Warn("failed to verify token", zap.Any("token", parsedToken))
 			// todo return ctx, errors.New("unable to verify token")
 		} else {
