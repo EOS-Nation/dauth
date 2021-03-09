@@ -46,7 +46,7 @@ func (l *LuaEventHandler) Test() {
 
 func (l *LuaEventHandler) HandleEvent(ev *pbbilling.Event, docQuota int) (bool, error) {
 
-	zlog.Info("handle_event", zap.Any("event", ev))
+	zlog.Debug("handle_event", zap.Any("event", ev))
 
 	keys := []string{
 		keyer.CurrentPeriodDocumentConsumption(ev.UserId),
