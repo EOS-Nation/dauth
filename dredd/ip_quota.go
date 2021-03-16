@@ -78,44 +78,24 @@ func NewIpLimitsHandlerFromFile(path string, defaultQuota int, defaultRate int) 
 	return limits, nil
 }
 
-func (w *IpLimitHandler) GetQuota(ipString string) (int, error) {
+func (w *IpLimitHandler) GetLimits(ipString string) (Limit, error) {
 
 	ip := net.ParseIP(ipString)
+	defaultLimits := Limit{Quota: w.defaultQuota, Rate: w.defaultRate}
 
 	if ip == nil {
-		return w.defaultQuota, fmt.Errorf("failed to parse ip: %s", ipString)
+		return defaultLimits, fmt.Errorf("failed to parse ip: %s", ipString)
 	}
 
 	if _, ok := w.ips[ip.String()]; ok {
-		return w.ips[ip.String()].Quota, nil
+		return w.ips[ip.String()], nil
 	}
 
 	for k, v := range w.ipNets {
 		if k.Contains(ip) {
-			return v.Quota, nil
+			return v, nil
 		}
 	}
 
-	return w.defaultQuota, nil
-}
-
-func (w *IpLimitHandler) GetRate(ipString string) (int, error) {
-
-	ip := net.ParseIP(ipString)
-
-	if ip == nil {
-		return w.defaultRate, fmt.Errorf("failed to parse ip: %s", ipString)
-	}
-
-	if _, ok := w.ips[ip.String()]; ok {
-		return w.ips[ip.String()].Rate, nil
-	}
-
-	for k, v := range w.ipNets {
-		if k.Contains(ip) {
-			return v.Rate, nil
-		}
-	}
-
-	return w.defaultRate, nil
+	return defaultLimits, nil
 }

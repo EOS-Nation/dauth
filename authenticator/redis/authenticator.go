@@ -203,13 +203,14 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 
 		// if we don't have a token, see if ip based quota handling is enabled and retrieve credentials from there
 		if a.ipQuotaHandler != nil {
-			quota, err := a.ipQuotaHandler.GetQuota(ipAddress)
-			credentials.Quota = quota
+			limits, err := a.ipQuotaHandler.GetLimits(ipAddress)
 
 			if err != nil {
 				return ctx, err
 			}
 
+			credentials.Quota = limits.Quota
+			credentials.Rate = limits.Rate
 			zlog.Info("created ip quota based credentials", zap.Any("credentials", credentials))
 		} else if a.enforceQuota {
 			zlog.Info("didn't get a token but required one")
