@@ -96,11 +96,6 @@ func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool,
 		return
 	}
 
-	// don't parse and error handle quota settings if we don't enforce it anyways
-	if !enforceQuota {
-		return
-	}
-
 	ipLimitsFile := values.Get("ipLimitsFile")
 	defaultIpQuotaString := values.Get("defaultIpQuota")
 	defaultIpRateString := values.Get("defaultIpRate")
