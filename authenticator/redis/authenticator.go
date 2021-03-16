@@ -32,7 +32,7 @@ import (
 )
 
 type authenticatorPlugin struct {
-	ipQuotaHandler         *dredd.IpQuotaHandler
+	ipQuotaHandler         *dredd.IpLimitHandler
 	kmsVerificationKeyFunc jwt.Keyfunc
 	enforceQuota           bool
 	enforceAuth            bool
@@ -51,7 +51,7 @@ func init() {
 	})
 }
 
-func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpQuotaHandler, err error) {
+func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpLimitHandler, err error) {
 	urlObject, err := url.Parse(configURL)
 	if err != nil {
 		return
@@ -101,10 +101,11 @@ func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool,
 		return
 	}
 
-	ipQuotaFile := values.Get("ipQuotaFile")
+	ipLimitsFile := values.Get("ipLimitsFile")
 	defaultIpQuotaString := values.Get("defaultIpQuota")
+	defaultIpRateString := values.Get("defaultIpRate")
 
-	if defaultIpQuotaString != "" {
+	if defaultIpQuotaString != "" || defaultIpRateString != "" {
 		var defaultIpQuota int
 		defaultIpQuota, err = strconv.Atoi(defaultIpQuotaString)
 
@@ -113,19 +114,27 @@ func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool,
 			return
 		}
 
-		if ipQuotaFile == "" {
-			ipQuotaHandler = dredd.NewIpQuotaHandler(defaultIpQuota)
+		var defaultIpRate int
+		defaultIpRate, err = strconv.Atoi(defaultIpRateString)
+
+		if err != nil {
+			err = fmt.Errorf("failed to parse default ip rate, expected integer: %s", defaultIpQuotaString)
+			return
+		}
+
+		if ipLimitsFile == "" {
+			ipQuotaHandler = dredd.NewIpLimitsHandler(defaultIpQuota, defaultIpRate)
 		} else {
-			ipQuotaHandler, err = dredd.NewIpQuotaHandlerFromFile(ipQuotaFile, defaultIpQuota)
+			ipQuotaHandler, err = dredd.NewIpLimitsHandlerFromFile(ipLimitsFile, defaultIpQuota, defaultIpRate)
 
 			if err != nil {
-				err = fmt.Errorf("failed to parse ip quota file: %e", err)
+				err = fmt.Errorf("failed to parse ip limits file: %e", err)
 				return
 			}
 		}
 	} else {
-		if ipQuotaFile != "" {
-			err = fmt.Errorf("ip quota file given, but defaultIpQuota is not set")
+		if ipLimitsFile != "" {
+			err = fmt.Errorf("ip limits file given, but defaultIpQuota or defaultIpRate is not set")
 			return
 		}
 		if jwtKey == "" {
@@ -137,7 +146,7 @@ func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool,
 	return
 }
 
-func newAuthenticator(redisNodes []string, db int, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpQuotaHandler) *authenticatorPlugin {
+func newAuthenticator(redisNodes []string, db int, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpLimitHandler) *authenticatorPlugin {
 	redisClient := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    "mymaster",
 		SentinelAddrs: redisNodes,

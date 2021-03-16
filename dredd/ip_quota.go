@@ -8,45 +8,53 @@ import (
 	"strings"
 )
 
-type IpQuotaHandler struct {
+type IpLimitHandler struct {
 	defaultQuota int
-	ipNets       map[*net.IPNet]int
-	ips          map[string]int
+	defaultRate  int
+	ipNets       map[*net.IPNet]Limit
+	ips          map[string]Limit
 }
 
-type IpQuotaCategory struct {
+type Limit struct {
+	Quota int
+	Rate  int
+}
+
+type IpLimitCategory struct {
 	Quota int      `yaml:"quota"`
+	Rate  int      `yaml:"rate"`
 	Ips   []string `yaml:"ips"`
 }
 
-func NewIpQuotaHandler(defaultQuota int) *IpQuotaHandler {
+func NewIpLimitsHandler(defaultQuota int, defaultRate int) *IpLimitHandler {
 
-	quotas := &IpQuotaHandler{}
-	quotas.defaultQuota = defaultQuota
-	quotas.ipNets = make(map[*net.IPNet]int)
-	quotas.ips = make(map[string]int)
+	limits := &IpLimitHandler{}
+	limits.defaultQuota = defaultQuota
+	limits.defaultRate = defaultRate
+	limits.ipNets = make(map[*net.IPNet]Limit)
+	limits.ips = make(map[string]Limit)
 
-	return quotas
+	return limits
 }
 
-func NewIpQuotaHandlerFromFile(path string, defaultQuota int) (*IpQuotaHandler, error) {
+func NewIpLimitsHandlerFromFile(path string, defaultQuota int, defaultRate int) (*IpLimitHandler, error) {
 
-	quotas := NewIpQuotaHandler(defaultQuota)
+	limits := NewIpLimitsHandler(defaultQuota, defaultRate)
 
 	b, err := ioutil.ReadFile(path)
-	quotaFile := make(map[string]IpQuotaCategory)
+	limitsFile := make(map[string]IpLimitCategory)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to open quota file: %w", err)
+		return nil, fmt.Errorf("failed to open limits file: %w", err)
 	}
 
-	err = yaml.Unmarshal(b, quotaFile)
+	err = yaml.Unmarshal(b, limitsFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse yaml: %w", err)
 	}
 
-	for _, cat := range quotaFile {
-		quota := cat.Quota
+	for _, cat := range limitsFile {
+		limit := Limit{Quota: cat.Quota, Rate: cat.Rate}
 
 		for _, ipString := range cat.Ips {
 			if strings.Contains(ipString, "/") {
@@ -55,22 +63,22 @@ func NewIpQuotaHandlerFromFile(path string, defaultQuota int) (*IpQuotaHandler, 
 				if err != nil {
 					return nil, fmt.Errorf("failed to parse cidr: %w", err)
 				}
-				quotas.ipNets[ipNet] = quota
+				limits.ipNets[ipNet] = limit
 			} else {
 				ip := net.ParseIP(ipString)
 
 				if ip == nil {
 					return nil, fmt.Errorf("failed to parse ip: %w", err)
 				}
-				quotas.ips[ip.String()] = quota
+				limits.ips[ip.String()] = limit
 			}
 		}
 	}
 
-	return quotas, nil
+	return limits, nil
 }
 
-func (w *IpQuotaHandler) GetQuota(ipString string) (int, error) {
+func (w *IpLimitHandler) GetQuota(ipString string) (int, error) {
 
 	ip := net.ParseIP(ipString)
 
@@ -79,14 +87,35 @@ func (w *IpQuotaHandler) GetQuota(ipString string) (int, error) {
 	}
 
 	if _, ok := w.ips[ip.String()]; ok {
-		return w.ips[ip.String()], nil
+		return w.ips[ip.String()].Quota, nil
 	}
 
 	for k, v := range w.ipNets {
 		if k.Contains(ip) {
-			return v, nil
+			return v.Quota, nil
 		}
 	}
 
 	return w.defaultQuota, nil
+}
+
+func (w *IpLimitHandler) GetRate(ipString string) (int, error) {
+
+	ip := net.ParseIP(ipString)
+
+	if ip == nil {
+		return w.defaultRate, fmt.Errorf("failed to parse ip: %s", ipString)
+	}
+
+	if _, ok := w.ips[ip.String()]; ok {
+		return w.ips[ip.String()].Rate, nil
+	}
+
+	for k, v := range w.ipNets {
+		if k.Contains(ip) {
+			return v.Rate, nil
+		}
+	}
+
+	return w.defaultRate, nil
 }
