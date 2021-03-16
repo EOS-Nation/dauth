@@ -24,6 +24,7 @@ type Credentials struct {
 	jwt.StandardClaims
 
 	Quota int    `json:"quota"`
+	Rate  int    `json:"rate"`
 	IP    string `json:"-"`
 	/*
 		// DEPRECATED

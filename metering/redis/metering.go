@@ -168,7 +168,6 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 
 	zlog.Debug("emit event", zap.Any("event", ev), zap.Any("credentials", creds))
 
-	// todo add doc quota
 	_, err := m.luaHandler.HandleEvent(userEvent, quota)
 
 	if err != nil {
