@@ -56,7 +56,7 @@ func (l *LuaEventHandler) HandleEvent(ev *pbbilling.Event, docQuota int) (bool, 
 		keyer.UserIDBurstKey(ev.UserId),
 	}
 	// keys = append(keys, keyer.DocumentConsumptionLast30Days(ev.UserId, time.Now())...)
-	// keys = append(keys, keyer.DocumentConsumptionLastWindow(ev.UserId, 10, time.Now())...)
+	keys = append(keys, keyer.DocumentConsumptionLastWindow(ev.UserId, 10, time.Now())...)
 
 	zlog.Debug("keys", zap.Any("keys", keys))
 

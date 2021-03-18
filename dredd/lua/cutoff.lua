@@ -19,7 +19,6 @@ local function slice(tbl, first, last, step)
 end
 
 local function computeCurrentPeriodConsumption(windowSize)
-
     local keys = slice(KEYS, 5, 5 + windowSize)
     local values = redis.call("MGET", unpack(keys))
     local sum = 0
@@ -79,10 +78,8 @@ end
 local periodConsumeDocument = redis.call("INCRBY", userPeriodConsumedDoc, consumeDocument)
 if periodConsumeDocument == consumeDocument then
     -- We have a new currentPeriodConsumption key
-    local currentPeriodConsumption = computeCurrentPeriodConsumption(windowSizeMinutes)
-    periodConsumeDocument = currentPeriodConsumption
-
-    redis.call("SET", userPeriodConsumedDoc, currentPeriodConsumption)
+    periodConsumeDocument = computeCurrentPeriodConsumption(windowSizeMinutes)
+    redis.call("SET", userPeriodConsumedDoc, periodConsumeDocument)
     redis.call("EXPIREAT", userPeriodConsumedDoc, endOfWindowTimeStamp)
 end
 
