@@ -94,7 +94,7 @@ if periodConsumeDocument > (allocatedDocumentCount * windowSizeMinutes) then
     end
     -- burst is allowed, add an expiring burst key if not already exists
     if redis.call("EXISTS", burstKey) == 0 then
-        redis.call("SETEX", burstKey, burstWindowMinutes, "burst")
+        redis.call("SETEX", burstKey, burstWindowMinutes * 60, "burst")
     end
 
     return "burst"
