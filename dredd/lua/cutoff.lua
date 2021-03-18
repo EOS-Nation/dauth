@@ -86,7 +86,8 @@ end
 if periodConsumeDocument > (allocatedDocumentCount * windowSizeMinutes) then
     -- if the consumed document count is larger than the burst size or the key has already used it's burst we blacklist the key
     -- burst is allowed once for an evaluated window within the given burst window
-    if periodConsumeDocument > (allocatedDocumentCount * windowSizeMinutes * burstMultiplier) or redis.call("TTL", burstKey) < ((burstWindowMinutes * 60) - (windowSizeMinutes * 60 * 2)) then
+    if periodConsumeDocument > (allocatedDocumentCount * windowSizeMinutes * burstMultiplier)
+            or (redis.call("EXISTS", burstKey) == 1 and redis.call("TTL", burstKey) < ((burstWindowMinutes * 60) - (windowSizeMinutes * 60 * 2))) then
         redis.call("SETEX", blackListKey, blockDuration, "total doc exceeded")
         redis.call("INCR", blackListVersionKey)
         return "bl"
