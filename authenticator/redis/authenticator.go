@@ -173,27 +173,18 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 	credentials := &Credentials{}
 	credentials.IP = ipAddress
 
-	validToken := false
-
 	// if we have a token, try to get the credentials from it. A given token must always be valid
 	if token != "" {
 		parsedToken, err := jwt.ParseWithClaims(token, credentials, a.kmsVerificationKeyFunc)
 
-		if err != nil { // todo ||parsedToken == nil
-			zlog.Warn("failed to decode token", zap.Error(err))
-			// todo return ctx, err
-		}
-		if parsedToken != nil && !parsedToken.Valid {
-			zlog.Warn("failed to verify token", zap.Any("token", parsedToken))
-			// todo return ctx, errors.New("unable to verify token")
+		if err != nil {
+			return ctx, err
+		} else if !parsedToken.Valid {
+			return ctx, errors.New("unable to verify token")
 		} else {
-			validToken = true
 			zlog.Info("created token based credentials", zap.Any("credentials", credentials))
 		}
-	}
-
-	// we don't have a valid token, try ip based quota limiting
-	if !validToken {
+	} else {
 		credentials.Subject = "ip:" + ipAddress
 
 		// if we don't have a token, see if ip based quota handling is enabled and retrieve credentials from there
@@ -203,12 +194,10 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 			if err != nil {
 				return ctx, err
 			}
-
 			credentials.Quota = limits.Quota
 			credentials.Rate = limits.Rate
 			zlog.Info("created ip quota based credentials", zap.Any("credentials", credentials))
 		} else if a.enforceQuota {
-			zlog.Info("didn't get a token but required one")
 			return ctx, errors.New("no token given")
 		}
 	}
