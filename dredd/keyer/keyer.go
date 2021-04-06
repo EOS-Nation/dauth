@@ -52,6 +52,11 @@ func UserIDBlackListKey(userID string) string {
 	return BLACK_LIST_USER_KEY_PREFIX + DELIMITER + userID
 }
 
+//BUK:[USER_ID]
+func UserIDBurstKey(userID string) string {
+	return "BUK" + DELIMITER + userID
+}
+
 //BLU:VERSION
 func UserBlackListVersionKey() string {
 	return "BLU" + DELIMITER + "VERSION"

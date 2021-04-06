@@ -52,11 +52,13 @@ func (l *LuaEventHandler) HandleEvent(ev *pbbilling.Event, docQuota int) (bool, 
 		keyer.CurrentPeriodDocumentConsumption(ev.UserId),
 		keyer.UserIDBlackListKey(ev.UserId),
 		keyer.UserBlackListVersionKey(),
-		keyer.DocumentConsumptionDaily(ev.UserId, time.Now()),
 		keyer.DocumentConsumptionMinutely(ev.UserId, time.Now()),
+		keyer.UserIDBurstKey(ev.UserId),
 	}
 	// keys = append(keys, keyer.DocumentConsumptionLast30Days(ev.UserId, time.Now())...)
 	keys = append(keys, keyer.DocumentConsumptionLastWindow(ev.UserId, 10, time.Now())...)
+
+	zlog.Debug("keys", zap.Any("keys", keys))
 
 	now := time.Now()
 	// end of window is the end of the current minute, afterwards we want to calculate a new 10 min moving average
@@ -66,11 +68,17 @@ func (l *LuaEventHandler) HandleEvent(ev *pbbilling.Event, docQuota int) (bool, 
 
 	blacklisted := false
 
-	result := l.redisClient.EvalSha(context.Background(), l.scriptSHA1, keys, docQuota, ev.ResponsesCount, endOfWindow.Unix(), 600, 10)
+	var args []interface{}
+	args = append(args, docQuota, ev.ResponsesCount, endOfWindow.Unix(), 600, 10, 3, 360)
+	zlog.Debug("args", zap.Any("args", args))
+
+	result := l.redisClient.EvalSha(context.Background(), l.scriptSHA1, keys, args...)
 	luaRespStr, err := result.Result()
 	if err == nil {
 		blacklisted = (luaRespStr == "bl")
 	}
+
+	zlog.Debug("lua result", zap.Any("result", result), zap.Any("lua response string", luaRespStr))
 
 	if result.Err() != nil {
 		return blacklisted, fmt.Errorf("failed to eval rate limit script: %w", result.Err())
