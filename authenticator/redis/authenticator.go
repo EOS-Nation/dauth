@@ -34,6 +34,7 @@ import (
 type authenticatorPlugin struct {
 	ipQuotaHandler         *dredd.IpLimitHandler
 	kmsVerificationKeyFunc jwt.Keyfunc
+	network                string
 	enforceQuota           bool
 	enforceAuth            bool
 }
@@ -42,16 +43,16 @@ func init() {
 	// redis://redis1,redis2,redis3?quotaEnforce=true&jwtKey=abc123&quotaBlacklistUpdateInterval=5s&ipQuotaFile=/etc/quota.yml&defaultIpQuota=10
 	authenticator.Register("redis", func(configURL string) (authenticator.Authenticator, error) {
 
-		redisNodes, db, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, ipQuotaHandler, err := parseURL(configURL)
+		redisNodes, db, enforceQuota, jwtKey, network, quotaBlacklistUpdateInterval, ipQuotaHandler, err := parseURL(configURL)
 
 		if err != nil {
 			return nil, fmt.Errorf("redis auth factory: %w", err)
 		}
-		return newAuthenticator(redisNodes, db, enforceQuota, jwtKey, quotaBlacklistUpdateInterval, ipQuotaHandler), nil
+		return newAuthenticator(redisNodes, db, enforceQuota, jwtKey, network, quotaBlacklistUpdateInterval, ipQuotaHandler), nil
 	})
 }
 
-func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpLimitHandler, err error) {
+func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool, jwtKey, network string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpLimitHandler, err error) {
 	urlObject, err := url.Parse(configURL)
 	if err != nil {
 		return
@@ -73,6 +74,12 @@ func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool,
 	values := urlObject.Query()
 	enforceQuota = values.Get("quotaEnforce") == "true"
 	jwtKey = values.Get("jwtKey")
+	network = values.Get("network")
+
+	if network == "" {
+		err = fmt.Errorf("missing network key")
+		return
+	}
 
 	// if we didn't get a jwt key here, try the env variables
 	if jwtKey == "" {
@@ -141,7 +148,7 @@ func parseURL(configURL string) (redisNodes []string, db int, enforceQuota bool,
 	return
 }
 
-func newAuthenticator(redisNodes []string, db int, enforceQuota bool, jwtKey string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpLimitHandler) *authenticatorPlugin {
+func newAuthenticator(redisNodes []string, db int, enforceQuota bool, jwtKey, network string, quotaBlacklistUpdateInterval time.Duration, ipQuotaHandler *dredd.IpLimitHandler) *authenticatorPlugin {
 	redisClient := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    "mymaster",
 		SentinelAddrs: redisNodes,
@@ -160,6 +167,7 @@ func newAuthenticator(redisNodes []string, db int, enforceQuota bool, jwtKey str
 		},
 		ipQuotaHandler: ipQuotaHandler,
 		enforceQuota:   enforceQuota,
+		network:        network,
 		// token is required if we don't have a ip quota handler but enforce doc quota
 		enforceAuth: ipQuotaHandler == nil && enforceQuota,
 	}
@@ -182,6 +190,24 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 		} else if !parsedToken.Valid {
 			return ctx, errors.New("unable to verify token")
 		} else {
+
+			hasAllowedNetworkUsage := true
+
+			if len(credentials.Networks) > 0 {
+				hasAllowedNetworkUsage = false
+
+				for _, n := range credentials.Networks {
+					if n.Name == a.network {
+						hasAllowedNetworkUsage = true
+						break
+					}
+				}
+			}
+
+			if !hasAllowedNetworkUsage {
+				return ctx, errors.New("no usage allowed on network " + a.network)
+			}
+
 			zlog.Info("created token based credentials", zap.Any("credentials", credentials))
 		}
 	} else {

@@ -161,7 +161,17 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 		// userEvent.ApiKeyId = c.APIKeyID
 		// userEvent.Usage = c.Usage
 		userEvent.IpAddress = c.IP
-		quota = c.Quota
+
+		if len(c.Networks) > 0 {
+			for _, n := range c.Networks {
+				if n.Name == m.network {
+					quota = n.Quota
+					break
+				}
+			}
+		} else {
+			quota = c.Quota
+		}
 	default:
 		zlog.Warn("got invalid credentials type", zap.Any("c", c))
 	}
