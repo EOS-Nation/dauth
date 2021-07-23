@@ -204,6 +204,8 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 				}
 			}
 
+			zlog.Debug("has allowed network usage", zap.String("network", a.network), zap.Bool("is allowed", hasAllowedNetworkUsage))
+
 			if !hasAllowedNetworkUsage {
 				return ctx, errors.New("no usage allowed on network " + a.network)
 			}

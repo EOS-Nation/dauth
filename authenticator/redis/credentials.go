@@ -23,10 +23,11 @@ import (
 type Credentials struct {
 	jwt.StandardClaims
 	IP       string                   `json:"-"`
+	ApiKeyId string                   `json:"api_key_id"`
 	Networks []NetworkPermissionClaim `json:"networks"`
 
 	Quota int `json:"quota"` // deprecated
-	Rate  int `json:"rate"` // deprecated
+	Rate  int `json:"rate"`  // deprecated
 }
 
 type NetworkPermissionClaim struct {
