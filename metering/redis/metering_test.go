@@ -3,13 +3,13 @@ package redis
 import (
 	"context"
 	"encoding/hex"
-	"github.com/dfuse-io/dauth/authenticator"
+	"github.com/eosnationftw/dauth/authenticator"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	auth_redis "github.com/dfuse-io/dauth/authenticator/redis"
-	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
+	auth_redis "github.com/eosnationftw/dauth/authenticator/redis"
+	pbbilling "github.com/eosnationftw/dauth/pb/dfuse/billing/v1"
 	"github.com/dfuse-io/dmetering"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/golang/protobuf/proto"

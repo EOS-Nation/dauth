@@ -17,12 +17,12 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/dfuse-io/dauth/dredd"
+	"github.com/eosnationftw/dauth/dredd"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/dfuse-io/dauth/authenticator"
+	"github.com/eosnationftw/dauth/authenticator"
 	"go.uber.org/zap"
 )
 

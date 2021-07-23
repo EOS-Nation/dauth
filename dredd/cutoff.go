@@ -3,13 +3,13 @@ package dredd
 import (
 	"context"
 	"fmt"
-	"github.com/dfuse-io/dauth/dredd/lua"
-	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
+	"github.com/eosnationftw/dauth/dredd/lua"
+	pbbilling "github.com/eosnationftw/dauth/pb/dfuse/billing/v1"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 	"time"
 
-	"github.com/dfuse-io/dauth/dredd/keyer"
+	"github.com/eosnationftw/dauth/dredd/keyer"
 	"github.com/dfuse-io/dmetrics"
 )
 

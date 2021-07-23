@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dfuse-io/dauth/ratelimiter"
+	"github.com/eosnationftw/dauth/ratelimiter"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )

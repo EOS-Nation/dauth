@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dfuse-io/dauth/dredd"
+	"github.com/eosnationftw/dauth/dredd"
 	"github.com/form3tech-oss/jwt-go"
 	"go.uber.org/zap"
 	"net/url"
@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dfuse-io/dauth/authenticator"
+	"github.com/eosnationftw/dauth/authenticator"
 	"github.com/go-redis/redis/v8"
 )
 

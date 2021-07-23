@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
+	pbbilling "github.com/eosnationftw/dauth/pb/dfuse/billing/v1"
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 )

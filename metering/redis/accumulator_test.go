@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
+	pbbilling "github.com/eosnationftw/dauth/pb/dfuse/billing/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )

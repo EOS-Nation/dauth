@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/dfuse-io/dauth/authenticator"
-	"github.com/dfuse-io/dauth/dredd"
+	"github.com/eosnationftw/dauth/authenticator"
+	"github.com/eosnationftw/dauth/dredd"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"

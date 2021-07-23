@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dfuse-io/dauth/dredd/keyer"
+	"github.com/eosnationftw/dauth/dredd/keyer"
 	"github.com/go-redis/redis/v8"
 )
 

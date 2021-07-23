@@ -1,4 +1,4 @@
-module github.com/dfuse-io/dauth
+module github.com/eosnationftw/dauth
 
 require (
 	cloud.google.com/go/pubsub v1.0.1
