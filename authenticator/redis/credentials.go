@@ -22,26 +22,18 @@ import (
 
 type Credentials struct {
 	jwt.StandardClaims
+	IP       string                   `json:"-"`
+	ApiKeyId string                   `json:"api_key_id"`
+	Networks []NetworkPermissionClaim `json:"networks"`
 
+	Quota int `json:"quota"` // deprecated
+	Rate  int `json:"rate"`  // deprecated
+}
+
+type NetworkPermissionClaim struct {
+	Name  string `json:"name"`
 	Quota int    `json:"quota"`
 	Rate  int    `json:"rate"`
-	IP    string `json:"-"`
-	/*
-		// DEPRECATED
-		Tier string `json:"tier,omitempty"`
-
-		// From JWT
-		Version    int    `json:"v"`
-		Usage      string `json:"usg"`
-		APIKeyID   string `json:"aki"`
-		Origin     string `json:"origin,omitempty"`
-		StartBlock int64  `json:"stblk,omitempty"`
-
-		PlanTier     int32   `json:"plan"`
-		FeatureFlags []int32 `json:"opts,omitempty"`
-
-		IP string `json:"-"`
-	*/
 }
 
 func (c *Credentials) GetUserID() string {

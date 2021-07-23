@@ -158,10 +158,23 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 	case *redisAuth.Credentials:
 		// userEvent.UserId = c.Subject
 		userEvent.UserId = c.Subject
-		// userEvent.ApiKeyId = c.APIKeyID
+		userEvent.ApiKeyId = c.ApiKeyId
 		// userEvent.Usage = c.Usage
 		userEvent.IpAddress = c.IP
-		quota = c.Quota
+
+		if len(c.Networks) > 0 {
+			for _, n := range c.Networks {
+				if n.Name == m.network {
+					zlog.Debug("found network in the token, applying network based rate limits", zap.Any("network", n))
+
+					quota = n.Quota
+					break
+				}
+			}
+		} else {
+			zlog.Debug("did not find network in the token, applying global rate limits")
+			quota = c.Quota
+		}
 	default:
 		zlog.Warn("got invalid credentials type", zap.Any("c", c))
 	}
