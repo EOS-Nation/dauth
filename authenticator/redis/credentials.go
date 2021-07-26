@@ -25,9 +25,6 @@ type Credentials struct {
 	IP       string                   `json:"-"`
 	ApiKeyId string                   `json:"api_key_id"`
 	Networks []NetworkPermissionClaim `json:"networks"`
-
-	Quota int `json:"quota"` // deprecated
-	Rate  int `json:"rate"`  // deprecated
 }
 
 type NetworkPermissionClaim struct {

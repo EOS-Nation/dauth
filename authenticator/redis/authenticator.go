@@ -191,16 +191,12 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 			return ctx, errors.New("unable to verify token")
 		} else {
 
-			hasAllowedNetworkUsage := true
+			hasAllowedNetworkUsage := false
 
-			if len(credentials.Networks) > 0 {
-				hasAllowedNetworkUsage = false
-
-				for _, n := range credentials.Networks {
-					if n.Name == a.network {
-						hasAllowedNetworkUsage = true
-						break
-					}
+			for _, n := range credentials.Networks {
+				if n.Name == a.network {
+					hasAllowedNetworkUsage = true
+					break
 				}
 			}
 
@@ -222,8 +218,13 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 			if err != nil {
 				return ctx, err
 			}
-			credentials.Quota = limits.Quota
-			credentials.Rate = limits.Rate
+
+			credentials.Networks = []NetworkPermissionClaim{{
+				Name:  a.network,
+				Quota: limits.Quota,
+				Rate:  limits.Rate,
+			}}
+
 			zlog.Info("created ip quota based credentials", zap.Any("credentials", credentials))
 		} else if a.enforceQuota {
 			return ctx, errors.New("no token given")

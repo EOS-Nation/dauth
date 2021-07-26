@@ -147,7 +147,7 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 		IdleTime:          ev.IdleTime,
 	}
 
-	quota := 0
+	quota := 120
 
 	switch c := creds.(type) {
 	case *authenticator.AnonymousCredentials:
@@ -156,25 +156,25 @@ func (m *meteringPlugin) EmitWithCredentials(ev dmetering.Event, creds authentic
 		userEvent.Usage = "anonymous"
 		userEvent.IpAddress = "0.0.0.0"
 	case *redisAuth.Credentials:
-		// userEvent.UserId = c.Subject
 		userEvent.UserId = c.Subject
 		userEvent.ApiKeyId = c.ApiKeyId
 		// userEvent.Usage = c.Usage
 		userEvent.IpAddress = c.IP
 
-		if len(c.Networks) > 0 {
-			for _, n := range c.Networks {
-				if n.Name == m.network {
-					zlog.Debug("found network in the token, applying network based rate limits", zap.Any("network", n))
+		hasNetworkQuotaAssigned := false
 
-					quota = n.Quota
-					break
-				}
+		for _, n := range c.Networks {
+			if n.Name == m.network {
+				zlog.Debug("found network in the token, applying network based rate limits", zap.Any("network", n))
+				hasNetworkQuotaAssigned = true
+				quota = n.Quota
+				break
 			}
-		} else {
-			zlog.Debug("did not find network in the token, applying global rate limits")
-			quota = c.Quota
 		}
+		if !hasNetworkQuotaAssigned {
+			zlog.Error("missing network quota in access token, assigning 120", zap.Any("credentials", c), zap.String("network", m.network))
+		}
+
 	default:
 		zlog.Warn("got invalid credentials type", zap.Any("c", c))
 	}
