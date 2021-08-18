@@ -15,12 +15,12 @@
 package middleware
 
 import (
-	"github.com/dfuse-io/logging"
+	"github.com/streamingfast/logging"
 	"go.uber.org/zap"
 )
 
 var zlog *zap.Logger
 
 func init() {
-	logging.Register("github.com/dfuse-io/dauth/authenticator/middleware", &zlog)
+	logging.Register("github.com/streamingfast/dauth/authenticator/middleware", &zlog)
 }

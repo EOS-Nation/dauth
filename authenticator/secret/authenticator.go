@@ -19,7 +19,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/dfuse-io/dauth/authenticator"
+	"github.com/streamingfast/dauth/authenticator"
 	"go.uber.org/zap"
 )
 
@@ -54,8 +54,8 @@ func newAuthenticator(secret string) *authenticatorPlugin {
 	}
 }
 
-func (a *authenticatorPlugin) IsAuthenticationTokenRequired() bool {
-	return true
+func (a *authenticatorPlugin) GetAuthTokenRequirement() authenticator.AuthTokenRequirement {
+	return authenticator.AuthTokenRequired
 }
 
 func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string) (context.Context, error) {
@@ -63,7 +63,8 @@ func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string
 		ctx = authenticator.WithCredentials(ctx, newCredentials(ipAddress))
 		return ctx, nil
 	}
-	return ctx, errors.New("Invalid authentication token")
+
+	return ctx, errors.New("invalid authentication token")
 
 }
 

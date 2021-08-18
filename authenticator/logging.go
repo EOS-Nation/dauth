@@ -15,12 +15,12 @@
 package authenticator
 
 import (
-	"github.com/dfuse-io/logging"
+	"github.com/streamingfast/logging"
 	"go.uber.org/zap"
 )
 
 var zlog *zap.Logger
 
 func init() {
-	logging.Register("github.com/dfuse-io/dauth/authenticator", &zlog)
+	logging.Register("github.com/streamingfast/dauth/authenticator", &zlog)
 }

@@ -20,21 +20,34 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dfuse-io/dauth/authenticator"
-	"github.com/dfuse-io/derr"
+	"github.com/streamingfast/derr"
+	"github.com/streamingfast/dauth/authenticator"
 	"google.golang.org/grpc/codes"
 )
 
 type AuthErrorHandler = func(w http.ResponseWriter, ctx context.Context, err error)
 type AuthMiddleware struct {
-	errorHandler  AuthErrorHandler
-	authenticator authenticator.Authenticator
+	errorHandler     AuthErrorHandler
+	authenticator    authenticator.Authenticator
+	tokenExtractFunc func(*http.Request) string
 }
 
-func NewAuthMiddleware(authenticator authenticator.Authenticator, errorHandler AuthErrorHandler) *AuthMiddleware {
-	return &AuthMiddleware{
+type Option func(*AuthMiddleware)
+
+func NewAuthMiddleware(authenticator authenticator.Authenticator, errorHandler AuthErrorHandler, options ...Option) *AuthMiddleware {
+	a := &AuthMiddleware{
 		authenticator: authenticator,
 		errorHandler:  errorHandler,
+	}
+	for _, opt := range options {
+		opt(a)
+	}
+	return a
+}
+
+func WithCustomTokenExtractor(f func(*http.Request) string) Option {
+	return func(a *AuthMiddleware) {
+		a.tokenExtractFunc = f
 	}
 }
 
@@ -47,10 +60,18 @@ func (middleware *AuthMiddleware) Handler(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 		tokenString := fromQueryOrHeader(r)
-		if middleware.authenticator.IsAuthenticationTokenRequired() && tokenString == "" {
+		if middleware.tokenExtractFunc != nil {
+			if extractedToken := middleware.tokenExtractFunc(r); extractedToken != "" { // always run this function if it exist, to trim request. Extracted token has precedence over token from Query or Header
+				tokenString = extractedToken
+			}
+		}
+
+		tokenRequirement := middleware.authenticator.GetAuthTokenRequirement()
+		if tokenRequirement == authenticator.AuthTokenRequired && tokenString == "" {
 			middleware.errorHandler(w, ctx, derr.Status(codes.Unauthenticated, "required authorization token not found"))
 			return
 		}
+
 		ip := authenticator.RealIPFromRequest(r)
 		nextCtx, err := middleware.authenticator.Check(ctx, tokenString, ip)
 		if err != nil {
