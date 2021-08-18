@@ -3,14 +3,14 @@ package dredd
 import (
 	"context"
 	"fmt"
-	"github.com/dfuse-io/dauth/dredd/lua"
-	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
 	"github.com/go-redis/redis/v8"
+	"github.com/streamingfast/dauth/dredd/lua"
+	pbbilling "github.com/streamingfast/dauth/pb/dfuse/billing/v1"
 	"go.uber.org/zap"
 	"time"
 
-	"github.com/dfuse-io/dauth/dredd/keyer"
-	"github.com/dfuse-io/dmetrics"
+	"github.com/streamingfast/dauth/dredd/keyer"
+	"github.com/streamingfast/dmetrics"
 )
 
 var Metrics = dmetrics.NewSet()

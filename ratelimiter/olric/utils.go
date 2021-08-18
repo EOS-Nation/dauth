@@ -109,7 +109,7 @@ func parseRateLimitsString(in string) (map[string]int64, error) {
 }
 
 func validateServices(userRateLimits map[string]int64, serviceNames []string) error {
-	for providedName, _ := range userRateLimits {
+	for providedName := range userRateLimits {
 		if !contains(serviceNames, providedName) {
 			return fmt.Errorf("invalid service name: %s", providedName)
 		}

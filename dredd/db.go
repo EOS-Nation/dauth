@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dfuse-io/dauth/dredd/keyer"
 	"github.com/go-redis/redis/v8"
+	"github.com/streamingfast/dauth/dredd/keyer"
 )
 
 type DB struct {

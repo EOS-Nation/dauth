@@ -24,13 +24,13 @@ type Credentials interface {
 type AnonymousCredentials struct {
 	// MUST implement Credentials
 	userID string
-	ip string
+	ip     string
 }
 
 func newAnonymousCredentials() *AnonymousCredentials {
 	return &AnonymousCredentials{
 		userID: "anonymous",
-		ip: "0.0.0.0",
+		ip:     "0.0.0.0",
 	}
 }
 

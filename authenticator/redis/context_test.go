@@ -21,10 +21,10 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/dfuse-io/dauth/authenticator"
-	"github.com/dfuse-io/dauth/dredd"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/go-redis/redis"
+	"github.com/streamingfast/dauth/authenticator"
+	"github.com/streamingfast/dauth/dredd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

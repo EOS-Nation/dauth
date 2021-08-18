@@ -18,8 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dfuse-io/dauth/dredd"
 	"github.com/form3tech-oss/jwt-go"
+	"github.com/streamingfast/dauth/dredd"
 	"go.uber.org/zap"
 	"net/url"
 	"os"
@@ -27,8 +27,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dfuse-io/dauth/authenticator"
 	"github.com/go-redis/redis/v8"
+	"github.com/streamingfast/dauth/authenticator"
 )
 
 type authenticatorPlugin struct {
@@ -173,9 +173,15 @@ func newAuthenticator(redisNodes []string, db int, enforceQuota bool, jwtKey, ne
 	}
 }
 
-func (a *authenticatorPlugin) IsAuthenticationTokenRequired() bool {
-	return a.enforceAuth
+func (a *authenticatorPlugin) GetAuthTokenRequirement() authenticator.AuthTokenRequirement {
+
+	if a.ipQuotaHandler == nil && a.enforceAuth {
+		return authenticator.AuthTokenRequired
+	} else {
+		return authenticator.AuthTokenOptional
+	}
 }
+
 
 func (a *authenticatorPlugin) Check(ctx context.Context, token, ipAddress string) (context.Context, error) {
 	credentials := &Credentials{}

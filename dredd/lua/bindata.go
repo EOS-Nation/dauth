@@ -193,7 +193,7 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"cutoff.lua": &bintree{cutoffLua, map[string]*bintree{}},
+	"cutoff.lua": {cutoffLua, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory

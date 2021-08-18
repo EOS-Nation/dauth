@@ -4,20 +4,20 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/dfuse-io/dauth/dredd"
-	pbbilling "github.com/dfuse-io/dauth/pb/dfuse/billing/v1"
-	"github.com/dfuse-io/derr"
 	"github.com/go-redis/redis/v8"
+	"github.com/streamingfast/dauth/dredd"
+	pbbilling "github.com/streamingfast/dauth/pb/dfuse/billing/v1"
+	"github.com/streamingfast/derr"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/dfuse-io/dauth/authenticator"
-	redisAuth "github.com/dfuse-io/dauth/authenticator/redis"
-	"github.com/dfuse-io/dmetering"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/streamingfast/dauth/authenticator"
+	redisAuth "github.com/streamingfast/dauth/authenticator/redis"
+	"github.com/streamingfast/dmetering"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
@@ -89,7 +89,7 @@ type meteringPlugin struct {
 // type topicProviderFunc func(pubsubProject string, topicName string) *pubsub.Topic
 type topicEmitterFunc func(e *pbbilling.Event)
 
-func newMetering(network string, hosts []string, db int, pubSubTopic string, warnOnPubSubErrors bool, emitterDelay time.Duration, /*topicProvider topicProviderFunc,*/ topicEmitter topicEmitterFunc) *meteringPlugin {
+func newMetering(network string, hosts []string, db int, pubSubTopic string, warnOnPubSubErrors bool, emitterDelay time.Duration /*topicProvider topicProviderFunc,*/, topicEmitter topicEmitterFunc) *meteringPlugin {
 	m := &meteringPlugin{
 		network:            network,
 		warnOnPubSubErrors: warnOnPubSubErrors,

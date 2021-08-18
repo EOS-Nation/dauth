@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dfuse-io/dauth/ratelimiter"
 	"github.com/go-redis/redis/v8"
+	"github.com/streamingfast/dauth/ratelimiter"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )

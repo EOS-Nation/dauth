@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/dfuse-io/dauth/dredd/keyer"
 	"github.com/go-redis/redis"
+	"github.com/streamingfast/dauth/dredd/keyer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -180,24 +180,24 @@ func TestDB_UserDocumentCounts(t *testing.T) {
 	cli := newTestClient()
 	db := NewDB(cli)
 
-	expectedData := []struct{
-		ExpectedKey string
-		ExpectedCount int64
+	expectedData := []struct {
+		ExpectedKey             string
+		ExpectedCount           int64
 		ExpectedCumulativeCount int64
 	}{
 		{
-			ExpectedKey:   keyer.DocumentConsumptionDaily("uid:0butyf99d12f03093f3ca", time.Now()),
-			ExpectedCount: 3,
+			ExpectedKey:             keyer.DocumentConsumptionDaily("uid:0butyf99d12f03093f3ca", time.Now()),
+			ExpectedCount:           3,
 			ExpectedCumulativeCount: 10,
 		},
 		{
-			ExpectedKey:   keyer.DocumentConsumptionDaily("uid:0butyf99d12f03093f3ca", time.Now().Add((-1 * 24 * time.Hour))),
-			ExpectedCount: 5,
+			ExpectedKey:             keyer.DocumentConsumptionDaily("uid:0butyf99d12f03093f3ca", time.Now().Add((-1 * 24 * time.Hour))),
+			ExpectedCount:           5,
 			ExpectedCumulativeCount: 7,
 		},
 		{
-			ExpectedKey:   keyer.DocumentConsumptionDaily("uid:0butyf99d12f03093f3ca", time.Now().Add((-2 * 24 * time.Hour))),
-			ExpectedCount: 2,
+			ExpectedKey:             keyer.DocumentConsumptionDaily("uid:0butyf99d12f03093f3ca", time.Now().Add((-2 * 24 * time.Hour))),
+			ExpectedCount:           2,
 			ExpectedCumulativeCount: 2,
 		},
 	}
@@ -206,7 +206,7 @@ func TestDB_UserDocumentCounts(t *testing.T) {
 		cli.Set(d.ExpectedKey, d.ExpectedCount, -1)
 	}
 
-	counts, total,  err := db.UserDocumentCounts("uid:0butyf99d12f03093f3ca")
+	counts, total, err := db.UserDocumentCounts("uid:0butyf99d12f03093f3ca")
 	require.NoError(t, err)
 	assert.Equal(t, expectedData[0].ExpectedCumulativeCount, total)
 	for i, d := range expectedData {

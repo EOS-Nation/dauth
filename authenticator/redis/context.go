@@ -17,12 +17,12 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/dfuse-io/dauth/dredd"
+	"github.com/streamingfast/dauth/dredd"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/dfuse-io/dauth/authenticator"
+	"github.com/streamingfast/dauth/authenticator"
 	"go.uber.org/zap"
 )
 
@@ -44,14 +44,14 @@ func Setup(ddb *dredd.DB, blacklistUpdateInterval time.Duration) {
 			sleepDuration = blacklistUpdateInterval
 
 			/*
-			v, err := dreddDB.UserBlackListVersion()
-			if err != nil {
-				zlog.Error("failed to retrieve black listed version", zap.Error(err))
-				continue
-			}
-				if v == blackListVersion {
+				v, err := dreddDB.UserBlackListVersion()
+				if err != nil {
+					zlog.Error("failed to retrieve black listed version", zap.Error(err))
 					continue
 				}
+					if v == blackListVersion {
+						continue
+					}
 			*/
 
 			// zlog.Info("updating black, new version available", zap.Int("user_black_list", blackListVersion))
