@@ -42,13 +42,7 @@ type authenticatorPlugin struct {
 func init() {
 	// redis://redis1,redis2,redis3?quotaEnforce=true&jwtKey=abc123&quotaBlacklistUpdateInterval=5s&ipQuotaFile=/etc/quota.yml&defaultIpQuota=10
 	authenticator.Register("redis", func(configURL string) (authenticator.Authenticator, error) {
-
-		zlog.Info("registering redis plugin")
-
 		redisNodes, db, enforceQuota, jwtKey, network, quotaBlacklistUpdateInterval, ipQuotaHandler, err := parseURL(configURL)
-
-		zlog.Info("init redis plugin", zap.Error(err))
-
 		if err != nil {
 			return nil, fmt.Errorf("redis auth factory: %w", err)
 		}
