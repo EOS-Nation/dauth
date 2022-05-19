@@ -1,4 +1,4 @@
-// Copyright 2019 dfuse Platform Inc.
+// Copyright 2021 dfuse Platform Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ratelimiter
+package gcp
 
 import (
-	"github.com/streamingfast/logging"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-var zlog, _ = logging.PackageLogger("dauth", "github.com/streamingfast/dauth/ratelimiter")
+func Test_parseURL(t *testing.T) {
+	cfgURL := "cloud-gcp://projects/foo-project/locations/global/keyRings/bar-keyring/cryptoKeys/default/cryptoKeyVersions/1"
+
+	kmsKeyPath, err := parseURL(cfgURL)
+
+	require.NoError(t, err)
+	require.Equal(t, "projects/foo-project/locations/global/keyRings/bar-keyring/cryptoKeys/default/cryptoKeyVersions/1", kmsKeyPath)
+}
