@@ -97,5 +97,9 @@ func (w *IpLimitHandler) GetLimits(ipString string) (Limit, error) {
 		}
 	}
 
+	if defaultLimits.Rate < 0 || defaultLimits.Quota < 0 {
+		return defaultLimits, fmt.Errorf("ip not whitelisted: %s", ipString)
+	}
+
 	return defaultLimits, nil
 }
