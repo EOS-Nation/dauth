@@ -16,11 +16,6 @@ package redis
 
 import (
 	"github.com/streamingfast/logging"
-	"go.uber.org/zap"
 )
 
-var zlog = zap.NewNop()
-
-func init() {
-	logging.Register("github/dfuse-io/dauth/authenticator/redis", &zlog)
-}
+var zlog, _ = logging.PackageLogger("dauth", "github.com/streamingfast/dauth/authenticator/middleware")
