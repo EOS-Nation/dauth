@@ -6,8 +6,8 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible
 	github.com/go-redis/redis v6.15.9+incompatible
-	github.com/go-redis/redis/v8 v8.3.3
-	github.com/golang/protobuf v1.4.3
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/golang/protobuf v1.5.2
 	github.com/linkedin/goavro/v2 v2.9.8
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
