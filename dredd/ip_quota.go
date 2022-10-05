@@ -80,6 +80,11 @@ func NewIpLimitsHandlerFromFile(path string, defaultQuota int, defaultRate int) 
 
 func (w *IpLimitHandler) GetLimits(ipString string) (Limit, error) {
 
+	// we need to remove the brackets for ipv6 addresses as net.ParseIP() won't accept them as part of the ip address
+	// this will break addresses including a port, but we should not get them here anyways
+	ipString = strings.ReplaceAll(ipString, "[", "")
+	ipString = strings.ReplaceAll(ipString, "]", "")
+
 	ip := net.ParseIP(ipString)
 	defaultLimits := Limit{Quota: w.defaultQuota, Rate: w.defaultRate}
 
