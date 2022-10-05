@@ -2,6 +2,12 @@ package redis
 
 import (
 	"github.com/streamingfast/logging"
+	"go.uber.org/zap"
 )
 
-var zlog, _ = logging.PackageLogger("dauth", "github/streamingfast/dauth/metering/redis")
+var traceEnabled = logging.IsTraceEnabled("dauth", "github.com/streamingfast/dauth/metering/redis")
+var zlog *zap.Logger
+
+func init() {
+	logging.Register("github.com/streamingfast/dauth/metering/redis", &zlog)
+}
