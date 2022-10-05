@@ -16,6 +16,12 @@ package ratelimiter
 
 import (
 	"github.com/streamingfast/logging"
+	"go.uber.org/zap"
 )
 
-var zlog, _ = logging.PackageLogger("dauth", "github.com/streamingfast/dauth/ratelimiter")
+var traceEnabled = logging.IsTraceEnabled("dauth", "github.com/streamingfast/dauth/ratelimiter")
+var zlog *zap.Logger
+
+func init() {
+	logging.Register("github.com/streamingfast/dauth/ratelimiter", &zlog)
+}

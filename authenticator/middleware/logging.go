@@ -16,6 +16,12 @@ package middleware
 
 import (
 	"github.com/streamingfast/logging"
+	"go.uber.org/zap"
 )
 
-var zlog, _ = logging.PackageLogger("dauth", "github.com/streamingfast/dauth/authenticator/middleware")
+var traceEnabled = logging.IsTraceEnabled("dauth", "github.com/streamingfast/dauth/middleware")
+var zlog *zap.Logger
+
+func init() {
+	logging.Register("github.com/streamingfast/dauth/middleware", &zlog)
+}
